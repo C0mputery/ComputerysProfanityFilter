@@ -61,7 +61,7 @@ public static class BenchmarkData {
 
     private static readonly string CorpusText = string.Join(" ", Corpus) + " ";
 
-    private static readonly string[] OwnWords = GetOwnStaticField<string[]>("Words");
+    private static readonly string[] OwnWords = [.. ComputerysProfanityFilter.DefaultProfanityList.Words];
     private static readonly string[] OwnExpandedWords = GetOwnExpandedWords(OwnWords);
     private static readonly string[] StephenWords = GetStephenWords();
 
@@ -85,20 +85,15 @@ public static class BenchmarkData {
         StephenOwnExpanded => new StephenFilter(OwnExpandedWords),
         ComputerysStephenRaw => new ComputeryFilter(
             boundary: '\uffff',
-            characterMap: GetOwnStaticField<Dictionary<char, string>>("CharacterMap"),
-            sequenceMap: GetOwnStaticField<Dictionary<string, string>>("SequenceMap"),
-            ignorableCharacters: GetOwnStaticField<HashSet<char>>("IgnorableCharacters"),
-            allowsEnglishDouble: GetOwnStaticField<HashSet<char>>("AllowsDouble"),
+            characterMap: ComputerysProfanityFilter.DefaultProfanityList.CharacterMap,
+            sequenceMap: ComputerysProfanityFilter.DefaultProfanityList.SequenceMap,
+            ignorableCharacters: ComputerysProfanityFilter.DefaultProfanityList.IgnorableCharacters,
+            allowsEnglishDouble: ComputerysProfanityFilter.DefaultProfanityList.AllowsDouble,
             words: StephenWords,
             expandWordForms: false),
         StephenStephenRaw => new StephenFilter(),
         _ => throw new ArgumentOutOfRangeException(nameof(configuration), configuration, "Unknown benchmark configuration.")
     };
-
-    private static T GetOwnStaticField<T>(string name) {
-        Type type = typeof(ComputeryFilter).Assembly.GetType("ComputerysProfanityFilter.DefaultProfanityList")!;
-        return (T)type.GetField(name, BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
-    }
 
     private static string[] GetOwnExpandedWords(string[] words) {
         ComputeryFilter filter = new ComputeryFilter();

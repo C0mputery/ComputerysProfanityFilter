@@ -17,9 +17,9 @@ namespace ComputerysProfanityFilter {
         ) { }
 
         public ProfanityList(
-            char boundary, IDictionary<char, string> characterMap, IDictionary<string, string> sequenceMap,
+            char boundary, IEnumerable<KeyValuePair<char, string>> characterMap, IEnumerable<KeyValuePair<string, string>> sequenceMap,
             IEnumerable<char> ignorableCharacters, IEnumerable<char> allowsEnglishDouble, IEnumerable<string> words,
-            bool expandWordForms = true
+            bool expandWordForms = true, IEnumerable<string>? allowedWords = null
         ) {
             if (characterMap is null) { throw new ArgumentNullException(nameof(characterMap)); }
             if (sequenceMap is null) { throw new ArgumentNullException(nameof(sequenceMap)); }
@@ -33,8 +33,13 @@ namespace ComputerysProfanityFilter {
             _ignorableCharacters = new HashSet<char>(ignorableCharacters);
             _allowsDouble = new HashSet<char>(allowsEnglishDouble);
             _sequenceMappingsByFirstCharacter = BuildSequenceIndex(sequenceMap1);
-            IEnumerable<string> patterns = expandWordForms ? PopulateVariations(words) : PopulateEncodedWords(words);
-            _matcher = new AhoCorasickMatcher(patterns, Boundary);
+            _matcher = new AhoCorasickMatcher(BuildPatterns(words, allowedWords, expandWordForms), Boundary);
+        }
+
+        private HashSet<string> BuildPatterns(IEnumerable<string> words, IEnumerable<string>? allowedWords, bool expandWordForms) {
+            HashSet<string> patterns = expandWordForms ? PopulateVariations(words) : PopulateEncodedWords(words);
+            if (allowedWords is not null) { patterns.ExceptWith(PopulateEncodedWords(allowedWords)); }
+            return patterns;
         }
 
         private HashSet<string> PopulateEncodedWords(IEnumerable<string> words) {

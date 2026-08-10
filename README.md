@@ -30,6 +30,7 @@ Entire matches, including their intervening punctuation, are replaced with the c
 Pass your own normalization rules and words to the constructor. By default, supplied words are
 expanded into several common English forms, so use base words where appropriate. Set
 `expandWordForms: false` to match only the supplied forms (after normalization).
+`allowedWords` removes matching normalized entries without expanding word forms.
 
 ```csharp
 using System.Collections.Generic;
@@ -41,12 +42,17 @@ ProfanityList filter = new ProfanityList(
     sequenceMap: new Dictionary<string, string>(),
     ignorableCharacters: new[] { '.', '-', '_' },
     allowsEnglishDouble: new[] { 'l', 's' },
-    words: new[] { "spoiler", "example phrase" }
+    words: new[] { "spoiler", "example phrase" },
+    allowedWords: new[] { "example phrase" }
 );
 
 string censored = filter.Censor("S-p-o-i-l-e-r ahead");
 // censored: "############# ahead"
 ```
+
+## Default configuration
+
+`DefaultProfanityList` exposes the built-in settings as read-only collections for reuse in custom filters.
 
 `boundary` separates words and phrases internally. Choose a character that cannot/wont occur in normal
 input; `\uFFFF` is the value used by the default filter. It is treated like whitespace if it is in the input.
@@ -65,20 +71,40 @@ ordinary, profane, and obfuscated text.
 
 ### Censoring
 
-| Engine and vocabulary | 100 chars | 1,000 chars | 10,000 chars | 100,000 chars |
-| --- | ---: | ---: | ---: | ---: |
-| ComputerysProfanityFilter / expanded default (5,352 words) | 1.658 us, 0 B | 17.570 us, 4 KB | 174.782 us, 39 KB | 1.677 ms, 391 KB |
-| Profanity.Detector / same expanded vocabulary (5,352 words) | 226.973 us, 5 KB | 1.532 ms, 165 KB | 15.114 ms, 13.7 MB | 224.520 ms, 1.32 GB |
-| ComputerysProfanityFilter / Profanity.Detector raw vocabulary (1,626 words) | 1.802 us, 496 B | 18.823 us, 4 KB | 198.936 us, 39 KB | 1.792 ms, 392 KB |
-| Profanity.Detector / raw default vocabulary (1,626 words) | 73.572 us, 5 KB | 541.266 us, 210 KB | 5.453 ms, 15.8 MB | 145.947 ms, 1.50 GB |
+Results are grouped by vocabulary so each comparison uses the same word list.
+Times are mean time per `Censor` operation; allocation is managed allocation per operation.
 
-Each cell shows mean time followed by managed allocation per operation.
+#### Expanded default vocabulary (5,352 words)
+| Mean Time | 100 chars | 1,000 chars | 10,000 chars | 100,000 chars |
+| --- | ---: | ---: | ---: | ---: |
+| ComputerysProfanityFilter | 1.658 us | 17.570 us | 174.782 us | 1.677 ms |
+| Profanity.Detector | 226.973 us | 1.532 ms | 15.114 ms | 224.520 ms |
+
+| Managed Allocation | 100 chars | 1,000 chars | 10,000 chars | 100,000 chars |
+| --- | ---: | ---: | ---: | ---: |
+| ComputerysProfanityFilter | 0 B | 4 KB | 39 KB | 391 KB |
+| Profanity.Detector | 5 KB | 165 KB | 13.7 MB | 1.32 GB |
+
 Across the measured input sizes, `Censor` was between 86x and 137x faster with the
-expanded vocabulary, and between 27x and 81x faster with the raw vocabulary.
+expanded vocabulary.
+
+#### Profanity.Detector raw vocabulary (1,626 words)
+| Mean time | 100 chars | 1,000 chars | 10,000 chars | 100,000 chars |
+| --- | ---: | ---: | ---: | ---: |
+| ComputerysProfanityFilter | 1.802 us | 18.823 us | 198.936 us | 1.792 ms |
+| Profanity.Detector | 73.572 us | 541.266 us | 5.453 ms | 145.947 ms |
+
+| Managed Allocation | 100 chars | 1,000 chars | 10,000 chars | 100,000 chars |
+| --- | ---: | ---: | ---: | ---: |
+| ComputerysProfanityFilter | 496 B | 4 KB | 39 KB | 392 KB |
+| Profanity.Detector | 5 KB | 210 KB | 15.8 MB | 1.50 GB |
+
+Across the measured input sizes, `Censor` was between 27x and 81x faster with the
+raw vocabulary.
 
 ### Construction
 
-Construction measurements create one filter instance.
+Construction measurements create one filter instance. This system doesn't have free construction, so be a little bit wary of that. Make sure that you cache your instance after it's created.
 
 | Engine and vocabulary | Mean | Allocated |
 | --- | ---: | ---: |

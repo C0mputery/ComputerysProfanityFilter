@@ -1,11 +1,12 @@
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace ComputerysProfanityFilter {
-    internal static class DefaultProfanityList {
+    public static class DefaultProfanityList {
         // U+FFFF (noncharacter)
-        internal const char Boundary = '\uFFFF';
+        public const char Boundary = '\uFFFF';
 
-        internal static readonly Dictionary<char, string> CharacterMap = new Dictionary<char, string> {
+        public static readonly IReadOnlyDictionary<char, string> CharacterMap = new ReadOnlyDictionary<char, string>(new Dictionary<char, string> {
             // 1337
             ['4'] = "a",
             ['@'] = "a",
@@ -55,9 +56,9 @@ namespace ComputerysProfanityFilter {
             ['υ'] = "u",
             ['ν'] = "v",
             ['χ'] = "x",
-        };
+        });
 
-        internal static readonly Dictionary<string, string> SequenceMap = new Dictionary<string, string> {
+        public static readonly IReadOnlyDictionary<string, string> SequenceMap = new ReadOnlyDictionary<string, string>(new Dictionary<string, string> {
             [@"/\/\"] = "m",
             [@"|\/|"] = "m",
             [@"\/\/"] = "w",
@@ -75,18 +76,18 @@ namespace ComputerysProfanityFilter {
             ["|{"] = "k",
             ["><"] = "x",
             ["}{"] = "x",
-        };
+        });
 
-        internal static readonly HashSet<char> IgnorableCharacters = new HashSet<char> {
+        public static readonly IReadOnlyCollection<char> IgnorableCharacters = new ReadOnlyCollection<char>(new char[] {
             '.', '_', '-', '*', '/', '\\', '~', '^', '=', '`', '\'', '"', ',', ';', ':', '?', '!', '#', '$',
             '%', '&', '+', '@', '|', '¿', '…', '–', '—', '•', '·', '(', ')', '[', ']', '{', '}', '<', '>',
-        };
+        });
 
-        internal static readonly HashSet<char> AllowsDouble = new HashSet<char> {
+        public static readonly IReadOnlyCollection<char> AllowsDouble = new ReadOnlyCollection<char>(new char[] {
             'b', 'c', 'd', 'e', 'f', 'g', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'z',
-        };
+        });
 
-        internal static readonly string[] Words = new string[] {
+        public static readonly IReadOnlyList<string> Words = new ReadOnlyCollection<string>(new string[] {
             // swears
             "arsehole",
             "asshole", "ahole",
@@ -221,6 +222,6 @@ namespace ComputerysProfanityFilter {
             "ꖦ",
             "ᛋᛋ",
             "⚡⚡"
-        };
+        });
     }
 }
