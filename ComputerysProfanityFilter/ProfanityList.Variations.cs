@@ -7,18 +7,18 @@ namespace ComputerysProfanityFilter {
     public sealed partial class ProfanityList {
         private static readonly string[] RegularSuffixes = { "ed", "ing", "er" };
 
-        private HashSet<string> PopulateVariations(IEnumerable<string> words) {
-            if (words == null) { throw new ArgumentNullException(nameof(words)); }
+        private HashSet<string> PopulateVariations(IEnumerable<string> entries) {
+            if (entries == null) { throw new ArgumentNullException(nameof(entries)); }
 
             HashSet<string> forms = new HashSet<string>();
-            foreach (string word in words) {
-                if (string.IsNullOrEmpty(word)) { continue; }
-                if (StringHelper.ContainsWhitespace(word)) {
-                    PopulatePhraseVariations(word, forms);
+            foreach (string entry in entries) {
+                if (string.IsNullOrEmpty(entry)) { continue; }
+                if (StringHelper.ContainsWhitespace(entry)) {
+                    PopulatePhraseVariations(entry, forms);
                     continue;
                 }
 
-                PopulateWordVariations(word, forms);
+                PopulateWordVariations(entry, forms);
             }
 
             return forms;

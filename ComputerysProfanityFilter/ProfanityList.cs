@@ -13,19 +13,19 @@ namespace ComputerysProfanityFilter {
 
         public ProfanityList() : this(
             DefaultProfanityList.Boundary, DefaultProfanityList.CharacterMap, DefaultProfanityList.SequenceMap,
-            DefaultProfanityList.IgnorableCharacters, DefaultProfanityList.AllowsDouble, DefaultProfanityList.Words
+            DefaultProfanityList.IgnorableCharacters, DefaultProfanityList.AllowsDouble, DefaultProfanityList.Entries
         ) { }
 
         public ProfanityList(
             char boundary, IEnumerable<KeyValuePair<char, string>> characterMap, IEnumerable<KeyValuePair<string, string>> sequenceMap,
-            IEnumerable<char> ignorableCharacters, IEnumerable<char> allowsEnglishDouble, IEnumerable<string> words,
-            bool expandWordForms = true, IEnumerable<string>? allowedWords = null
+            IEnumerable<char> ignorableCharacters, IEnumerable<char> allowsEnglishDouble, IEnumerable<string> entries,
+            bool expandEntryForms = true, IEnumerable<string>? allowedEntries = null
         ) {
             if (characterMap is null) { throw new ArgumentNullException(nameof(characterMap)); }
             if (sequenceMap is null) { throw new ArgumentNullException(nameof(sequenceMap)); }
             if (ignorableCharacters is null) { throw new ArgumentNullException(nameof(ignorableCharacters)); }
             if (allowsEnglishDouble is null) { throw new ArgumentNullException(nameof(allowsEnglishDouble)); }
-            if (words is null) { throw new ArgumentNullException(nameof(words)); }
+            if (entries is null) { throw new ArgumentNullException(nameof(entries)); }
 
             Boundary = boundary;
             _characterMap = new Dictionary<char, string>(characterMap);
@@ -33,21 +33,21 @@ namespace ComputerysProfanityFilter {
             _ignorableCharacters = new HashSet<char>(ignorableCharacters);
             _allowsDouble = new HashSet<char>(allowsEnglishDouble);
             _sequenceMappingsByFirstCharacter = BuildSequenceIndex(sequenceMap1);
-            _matcher = new AhoCorasickMatcher(BuildPatterns(words, allowedWords, expandWordForms), Boundary);
+            _matcher = new AhoCorasickMatcher(BuildPatterns(entries, allowedEntries, expandEntryForms), Boundary);
         }
 
-        private HashSet<string> BuildPatterns(IEnumerable<string> words, IEnumerable<string>? allowedWords, bool expandWordForms) {
-            HashSet<string> patterns = expandWordForms ? PopulateVariations(words) : PopulateEncodedWords(words);
-            if (allowedWords is not null) { patterns.ExceptWith(PopulateEncodedWords(allowedWords)); }
+        private HashSet<string> BuildPatterns(IEnumerable<string> entries, IEnumerable<string>? allowedEntries, bool expandEntryForms) {
+            HashSet<string> patterns = expandEntryForms ? PopulateVariations(entries) : PopulateEncodedEntries(entries);
+            if (allowedEntries is not null) { patterns.ExceptWith(PopulateEncodedEntries(allowedEntries)); }
             return patterns;
         }
 
-        private HashSet<string> PopulateEncodedWords(IEnumerable<string> words) {
-            HashSet<string> encodedWords = new HashSet<string>();
-            foreach (string word in words) {
-                if (!string.IsNullOrEmpty(word)) { PopulateEncodedWord(word, encodedWords); }
+        private HashSet<string> PopulateEncodedEntries(IEnumerable<string> entries) {
+            HashSet<string> encodedEntries = new HashSet<string>();
+            foreach (string entry in entries) {
+                if (!string.IsNullOrEmpty(entry)) { PopulateEncodedWord(entry, encodedEntries); }
             }
-            return encodedWords;
+            return encodedEntries;
         }
 
         private static Dictionary<char, SequenceMapping[]> BuildSequenceIndex(IEnumerable<KeyValuePair<string, string>> sequenceMap) {

@@ -87,7 +87,7 @@ namespace ComputerysProfanityFilter {
             'b', 'c', 'd', 'e', 'f', 'g', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'z',
         });
 
-        public static readonly IReadOnlyList<string> Words = new ReadOnlyCollection<string>(new string[] {
+        public static readonly IReadOnlyList<string> Entries = new ReadOnlyCollection<string>(new string[] {
             // swears
             "arsehole",
             "asshole", "ahole",

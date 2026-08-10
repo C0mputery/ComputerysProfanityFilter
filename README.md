@@ -28,8 +28,8 @@ Entire matches, including their intervening punctuation, are replaced with the c
 ## Custom word/phrase list
 Pass your own normalization rules and words/phrases to the constructor. By default, supplied words/phrases
 are expanded into several common English forms, so use base words where appropriate. Set
-`expandWordForms: false` to match only the supplied forms (after normalization).
-`allowedWords` removes matching normalized entries without expanding word forms.
+`expandEntryForms: false` to match only the supplied forms (after normalization).
+`allowedEntries` removes matching normalized entries without expanding word forms.
 
 ```csharp
 using System.Collections.Generic;
@@ -41,8 +41,8 @@ ProfanityList filter = new ProfanityList(
     sequenceMap: new Dictionary<string, string>(),
     ignorableCharacters: new[] { '.', '-', '_' },
     allowsEnglishDouble: new[] { 'l', 's' },
-    words: new[] { "spoiler", "example phrase" },
-    allowedWords: new[] { "example phrase" }
+    entries: new[] { "spoiler", "example phrase" },
+    allowedEntries: new[] { "example phrase" }
 );
 
 string censored = filter.Censor("S-p-o-i-l-e-r ahead");

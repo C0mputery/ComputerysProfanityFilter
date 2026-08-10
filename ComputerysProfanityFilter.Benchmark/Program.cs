@@ -61,7 +61,7 @@ public static class BenchmarkData {
 
     private static readonly string CorpusText = string.Join(" ", Corpus) + " ";
 
-    private static readonly string[] OwnWords = [.. ComputerysProfanityFilter.DefaultProfanityList.Words];
+    private static readonly string[] OwnWords = [.. ComputerysProfanityFilter.DefaultProfanityList.Entries];
     private static readonly string[] OwnExpandedWords = GetOwnExpandedWords(OwnWords);
     private static readonly string[] StephenWords = GetStephenWords();
 
@@ -89,8 +89,8 @@ public static class BenchmarkData {
             sequenceMap: ComputerysProfanityFilter.DefaultProfanityList.SequenceMap,
             ignorableCharacters: ComputerysProfanityFilter.DefaultProfanityList.IgnorableCharacters,
             allowsEnglishDouble: ComputerysProfanityFilter.DefaultProfanityList.AllowsDouble,
-            words: StephenWords,
-            expandWordForms: false),
+            entries: StephenWords,
+            expandEntryForms: false),
         StephenStephenRaw => new StephenFilter(),
         _ => throw new ArgumentOutOfRangeException(nameof(configuration), configuration, "Unknown benchmark configuration.")
     };
