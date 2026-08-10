@@ -2,8 +2,7 @@
 
 A .NET Standard 2.1 (C# version 9 for unity) profanity filter that censors known words while recognizing common
 obfuscations such as character substitutions, punctuation, repeated letters, and leetspeak.
-
-With what I believe to be a reasonable enough default word list. [link here]
+The [default word list](ComputerysProfanityFilter/DefaultProfanityList.cs) is resonable and covers swares, hate speach, and self harm.
 
 ## Basic usage
 Create one `ProfanityList` and reuse it when filtering messages. `Censor` returns the original
