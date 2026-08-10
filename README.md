@@ -1,8 +1,8 @@
 # ComputerysProfanityFilter
 
-A .NET Standard 2.1 (C# version 9 for unity) profanity filter that censors known words while recognizing common
+A .NET Standard 2.1 (C# version 9 for unity) profanity filter that censors known words/phrases while recognizing common
 obfuscations such as character substitutions, punctuation, repeated letters, and leetspeak.
-The [default word list](ComputerysProfanityFilter/DefaultProfanityList.cs) is resonable and covers swares, hate speach, and self harm.
+The [default word/phrase list](ComputerysProfanityFilter/DefaultProfanityList.cs) is resonable and covers swares, hate speach, and self harm.
 
 ## Basic usage
 Create one `ProfanityList` and reuse it when filtering messages. `Censor` returns the original
@@ -25,9 +25,9 @@ Matching flexable, case-insensitive, it'll normalizes many substitutions (1337 s
 ignores selected punctuation within words, and collapses excessive repeated letters.
 Entire matches, including their intervening punctuation, are replaced with the censor character.
 
-## Custom word list
-Pass your own normalization rules and words to the constructor. By default, supplied words are
-expanded into several common English forms, so use base words where appropriate. Set
+## Custom word/phrase list
+Pass your own normalization rules and words/phrases to the constructor. By default, supplied words/phrases
+are expanded into several common English forms, so use base words where appropriate. Set
 `expandWordForms: false` to match only the supplied forms (after normalization).
 `allowedWords` removes matching normalized entries without expanding word forms.
 
