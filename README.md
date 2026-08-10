@@ -67,14 +67,14 @@ ordinary, profane, and obfuscated text.
 
 | Engine and vocabulary | 100 chars | 1,000 chars | 10,000 chars | 100,000 chars |
 | --- | ---: | ---: | ---: | ---: |
-| ComputerysProfanityFilter / expanded default (5,352 words) | 1.710 us, 0 B | 19.412 us, 4 KB | 192.328 us, 39 KB | 1.931 ms, 391 KB |
-| Profanity.Detector / same expanded vocabulary (5,352 words) | 226.774 us, 5 KB | 1.567 ms, 165 KB | 15.379 ms, 13.7 MB | 231.053 ms, 1.32 GB |
-| ComputerysProfanityFilter / Profanity.Detector raw vocabulary (1,626 words) | 2.254 us, 496 B | 21.094 us, 4 KB | 208.364 us, 39 KB | 1.953 ms, 392 KB |
-| Profanity.Detector / raw default vocabulary (1,626 words) | 73.073 us, 5 KB | 562.448 us, 210 KB | 6.142 ms, 15.8 MB | 174.232 ms, 1.50 GB |
+| ComputerysProfanityFilter / expanded default (5,352 words) | 1.658 us, 0 B | 17.570 us, 4 KB | 174.782 us, 39 KB | 1.677 ms, 391 KB |
+| Profanity.Detector / same expanded vocabulary (5,352 words) | 226.973 us, 5 KB | 1.532 ms, 165 KB | 15.114 ms, 13.7 MB | 224.520 ms, 1.32 GB |
+| ComputerysProfanityFilter / Profanity.Detector raw vocabulary (1,626 words) | 1.802 us, 496 B | 18.823 us, 4 KB | 198.936 us, 39 KB | 1.792 ms, 392 KB |
+| Profanity.Detector / raw default vocabulary (1,626 words) | 73.572 us, 5 KB | 541.266 us, 210 KB | 5.453 ms, 15.8 MB | 145.947 ms, 1.50 GB |
 
 Each cell shows mean time followed by managed allocation per operation.
-Across the measured input sizes, `Censor` was between 80x and 133x faster with the
-expanded vocabulary, and between 27x and 89x faster with the raw vocabulary.
+Across the measured input sizes, `Censor` was between 86x and 137x faster with the
+expanded vocabulary, and between 27x and 81x faster with the raw vocabulary.
 
 ### Construction
 
@@ -82,7 +82,7 @@ Construction measurements create one filter instance.
 
 | Engine and vocabulary | Mean | Allocated |
 | --- | ---: | ---: |
-| ComputerysProfanityFilter / expanded default (5,352 words) | 12.534 ms | 11.38 MB |
-| Profanity.Detector / same expanded vocabulary (5,352 words) | 7.062 us | 54.69 KB |
-| ComputerysProfanityFilter / Profanity.Detector raw vocabulary (1,626 words) | 1.328 ms | 2.76 MB |
-| Profanity.Detector / raw default vocabulary (1,626 words) | 5.048 us | 25.58 KB |
+| ComputerysProfanityFilter / expanded default (5,352 words) | 6.882 ms | 6.14 MB |
+| Profanity.Detector / same expanded vocabulary (5,352 words) | 5.858 us | 54.69 KB |
+| ComputerysProfanityFilter / Profanity.Detector raw vocabulary (1,626 words) | 881.638 us | 1.93 MB |
+| Profanity.Detector / raw default vocabulary (1,626 words) | 4.637 us | 25.58 KB |

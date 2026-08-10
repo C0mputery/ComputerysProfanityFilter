@@ -5,6 +5,8 @@ using System.Runtime.CompilerServices;
 // FYI, I am very bad at English rules, a lot of this was derived from consulting LLMs for english rules.
 namespace ComputerysProfanityFilter {
     public sealed partial class ProfanityList {
+        private static readonly string[] RegularSuffixes = { "ed", "ing", "er" };
+
         private HashSet<string> PopulateVariations(IEnumerable<string> words) {
             if (words == null) { throw new ArgumentNullException(nameof(words)); }
 
@@ -86,7 +88,7 @@ namespace ComputerysProfanityFilter {
             //               Some consonant-vowel-consonant words double their final consonant before a suffix (run -> running, stop -> stopped).
             // This implementation is more broad than the rule and adds every suffix to all words,
             // while trying consonant doubling for every word that ends in a consonant.
-            foreach (string suffix in new[] { "ed", "ing", "er" }) {
+            foreach (string suffix in RegularSuffixes) {
                 forms.Add(string.Concat(word, suffix));
                 if (IsConsonant(lastCharacter)) { forms.Add(word + lastCharacter + suffix); }
             }
@@ -131,7 +133,7 @@ namespace ComputerysProfanityFilter {
         private static bool IsVowel(char c) => c is 'a' or 'e' or 'i' or 'o' or 'u';
 
         private void PopulateEncodedWord(string form, HashSet<string> forms) {
-            string encoded = Encode(form).Value;
+            string encoded = Encode(form);
             if (encoded.Length > 0) { forms.Add(encoded); }
         }
 

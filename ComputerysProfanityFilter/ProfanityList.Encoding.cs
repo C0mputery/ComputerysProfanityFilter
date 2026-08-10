@@ -4,26 +4,20 @@ using System.Text;
 
 namespace ComputerysProfanityFilter {
     public sealed partial class ProfanityList {
-        private static readonly EncodedText EmptyEncodedText = new EncodedText(string.Empty, Array.Empty<SourceSpan>());
-
-        private EncodedText Encode(string value) {
+        private string Encode(string value) {
             if (value is null) { throw new ArgumentNullException(nameof(value)); }
 
             int end = value.Length;
             while (end > 0 && _ignorableCharacters.Contains(value[end - 1])) { end--; }
-            if (end == 0) { return EmptyEncodedText; }
+            if (end == 0) { return string.Empty; }
 
-            StringBuilder encoded = new StringBuilder(end);
-            List<SourceSpan> sourceSpans = new List<SourceSpan>(end);
-
+            StringBuilder encoded = new StringBuilder(end + 2);
             encoded.Append(Boundary);
-            sourceSpans.Add(new SourceSpan(0, 0));
 
             char previous = Boundary;
             int repetitions = 1;
             bool hasContent = false;
             for (int index = 0; index < end;) {
-                int sourceStart = index;
                 string? mapped = null;
                 int mappedLength = 0;
 
@@ -31,14 +25,8 @@ namespace ComputerysProfanityFilter {
                     do { index++; }
                     while (index < end && (char.IsWhiteSpace(value[index]) || value[index] == Boundary));
 
-                    if (previous == Boundary) {
-                        int lastSpanIndex = sourceSpans.Count - 1;
-                        SourceSpan previousSpan = sourceSpans[lastSpanIndex];
-                        sourceSpans[lastSpanIndex] = new SourceSpan(previousSpan.Start, index);
-                    }
-                    else {
+                    if (previous != Boundary) {
                         encoded.Append(Boundary);
-                        sourceSpans.Add(new SourceSpan(sourceStart, index));
                         previous = Boundary;
                         repetitions = 1;
                     }
@@ -63,31 +51,25 @@ namespace ComputerysProfanityFilter {
 
                     if (!_characterMap.TryGetValue(character, out mapped)) {
                         if (_ignorableCharacters.Contains(character)) { continue; }
-                        AppendEncodedCharacter(character, sourceStart, index, encoded, sourceSpans, ref previous, ref repetitions);
+                        AppendEncodedCharacter(character, encoded, ref previous, ref repetitions);
                         hasContent = true;
                         continue;
                     }
                 }
                 else { index += mappedLength; }
 
-                foreach (char mappedCharacterValue in mapped!) {
-                    AppendEncodedCharacter(mappedCharacterValue, sourceStart, index, encoded, sourceSpans, ref previous, ref repetitions);
+                foreach (char mappedCharacter in mapped!) {
+                    AppendEncodedCharacter(mappedCharacter, encoded, ref previous, ref repetitions);
                     hasContent = true;
                 }
             }
 
-            if (!hasContent) { return EmptyEncodedText; }
-            if (previous != Boundary) {
-                encoded.Append(Boundary);
-                sourceSpans.Add(new SourceSpan(end, end));
-            }
-            return new EncodedText(encoded.ToString(), sourceSpans);
+            if (!hasContent) { return string.Empty; }
+            if (previous != Boundary) { encoded.Append(Boundary); }
+            return encoded.ToString();
         }
 
-        private void AppendEncodedCharacter(
-            char value, int sourceStart, int sourceEnd, StringBuilder encoded, List<SourceSpan> sourceSpans,
-            ref char previous, ref int repetitions
-        ) {
+        private void AppendEncodedCharacter(char value, StringBuilder encoded, ref char previous, ref int repetitions) {
             char mappedCharacter = char.ToLowerInvariant(value);
             if (mappedCharacter == previous) { repetitions++; }
             else {
@@ -95,15 +77,8 @@ namespace ComputerysProfanityFilter {
                 repetitions = 1;
             }
 
-            int maximumRepetitions = _allowsDouble.Contains(mappedCharacter) ? 2 : 1;
-            if (repetitions <= maximumRepetitions) {
+            if (repetitions <= (_allowsDouble.Contains(mappedCharacter) ? 2 : 1)) {
                 encoded.Append(mappedCharacter);
-                sourceSpans.Add(new SourceSpan(sourceStart, sourceEnd));
-            }
-            else if (sourceSpans.Count > 0) {
-                int lastSpanIndex = sourceSpans.Count - 1;
-                SourceSpan previousSpan = sourceSpans[lastSpanIndex];
-                sourceSpans[lastSpanIndex] = new SourceSpan(previousSpan.Start, sourceEnd);
             }
         }
 
