@@ -1,68 +1,67 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 // FYI, I am very bad at English rules, a lot of this was derived from consulting LLMs for english rules.
 namespace ComputerysProfanityFilter {
     public sealed partial class ProfanityList {
         private static readonly string[] RegularSuffixes = { "ed", "ing", "er" };
 
-        private HashSet<string> PopulateVariations(IEnumerable<string> entries) {
-            if (entries == null) { throw new ArgumentNullException(nameof(entries)); }
+        private HashSet<string> GenerateEncodedVariations(IEnumerable<string> terms) {
+            if (terms == null) { throw new ArgumentNullException(nameof(terms)); }
 
-            HashSet<string> forms = new HashSet<string>();
-            foreach (string entry in entries) {
-                if (string.IsNullOrEmpty(entry)) { continue; }
-                if (StringHelper.ContainsWhitespace(entry)) {
-                    PopulatePhraseVariations(entry, forms);
+            HashSet<string> encodedForms = new HashSet<string>();
+            foreach (string term in terms) {
+                if (string.IsNullOrEmpty(term)) { continue; }
+                if (StringHelper.ContainsWhitespace(term)) {
+                    GenerateEncodedPhraseVariations(term, encodedForms);
                     continue;
                 }
 
-                PopulateWordVariations(entry, forms);
+                GenerateEncodedWordVariations(term, encodedForms);
             }
 
-            return forms;
+            return encodedForms;
         }
 
-        private void PopulatePhraseVariations(string phrase, HashSet<string> forms) {
+        private void GenerateEncodedPhraseVariations(string phrase, HashSet<string> encodedForms) {
             string[] tokens = StringHelper.SplitOnWhitespace(phrase);
-            HashSet<string>[] tokenForms = new HashSet<string>[tokens.Length];
-            for (int index = 0; index < tokens.Length; index++) {
+            int tokenCount = tokens.Length;
+            HashSet<string>[] tokenForms = new HashSet<string>[tokenCount];
+            for (int index = 0; index < tokenCount; index++) {
                 tokenForms[index] = new HashSet<string>();
-                PopulateWordForms(tokens[index], tokenForms[index]);
+                AddWordForms(tokens[index], tokenForms[index]);
             }
 
-            PopulatePhraseCombinations(tokenForms, new string[tokens.Length], 0, forms);
+            AddEncodedPhraseCombinations(tokenForms, new string[tokenCount], 0, encodedForms);
         }
 
-        private void PopulatePhraseCombinations(HashSet<string>[] tokenForms, string[] selectedForms, int tokenIndex, HashSet<string> forms) {
+        private void AddEncodedPhraseCombinations(HashSet<string>[] tokenForms, string[] selectedForms, int tokenIndex, HashSet<string> encodedForms) {
             if (tokenIndex == tokenForms.Length) {
-                PopulateEncodedWord(string.Join(' ', selectedForms), forms);
+                AddEncodedForm(string.Join(' ', selectedForms), encodedForms);
                 return;
             }
 
             foreach (string form in tokenForms[tokenIndex]) {
                 selectedForms[tokenIndex] = form;
-                PopulatePhraseCombinations(tokenForms, selectedForms, tokenIndex + 1, forms);
+                AddEncodedPhraseCombinations(tokenForms, selectedForms, tokenIndex + 1, encodedForms);
             }
         }
 
-        private void PopulateWordVariations(string word, HashSet<string> forms) {
+        private void GenerateEncodedWordVariations(string word, HashSet<string> encodedForms) {
             HashSet<string> wordForms = new HashSet<string>();
-            PopulateWordForms(word, wordForms);
-            foreach (string variation in wordForms) {
-                PopulateEncodedWord(variation, forms);
-            }
+            AddWordForms(word, wordForms);
+            foreach (string variation in wordForms) { AddEncodedForm(variation, encodedForms); }
         }
 
-        private static void PopulateWordForms(string word, HashSet<string> forms) {
+        private static void AddWordForms(string word, HashSet<string> forms) {
             forms.Add(word);
 
             // Skip on tiny tokens. noisy and pointless
             if (word.Length <= 2) { return; }
 
-            string stem = word.Substring(0, word.Length - 1);
+            string stem = word[..^1];
             char lastCharacter = word[^1];
+            bool endsWithE = word.EndsWith("e", StringComparison.Ordinal);
 
             // ENGLISH RULE: Regular plurals usually take -s (cat -> cats).
             //               Words ending in s, x, z, ch, or sh usually take -es (watch -> watches).
@@ -74,7 +73,7 @@ namespace ComputerysProfanityFilter {
             }
 
             // ENGLISH RULE: Pluralize `consonant + y` words by changing y to ies (cry -> cries).
-            if (word.EndsWith("y", StringComparison.Ordinal) && IsConsonant(word[^2])) {
+            if (word.EndsWith("y", StringComparison.Ordinal) && StringHelper.IsConsonant(word[^2])) {
                 forms.Add(string.Concat(stem, "ies"));
 
                 // ENGLISH RULE: A final y after a consonant changes to i before -ed, -er, and -est (try -> tried, nasty -> nastier/nastiest).
@@ -90,13 +89,13 @@ namespace ComputerysProfanityFilter {
             // while trying consonant doubling for every word that ends in a consonant.
             foreach (string suffix in RegularSuffixes) {
                 forms.Add(string.Concat(word, suffix));
-                if (IsConsonant(lastCharacter)) { forms.Add(word + lastCharacter + suffix); }
+                if (StringHelper.IsConsonant(lastCharacter)) { forms.Add(word + lastCharacter + suffix); }
             }
 
             // ENGLISH RULE: A silent final -e is commonly dropped before -ing (hate -> hating),
             //               but is retained before -d or -r (hate -> hated, bake -> baker).
             // This implementation is more broad than the rule and tries both forms for all words ending in e.
-            if (word.EndsWith("e", StringComparison.Ordinal)) {
+            if (endsWithE) {
                 forms.Add(string.Concat(stem, "ed"));
                 forms.Add(string.Concat(stem, "ing"));
                 forms.Add(string.Concat(stem, "er"));
@@ -113,29 +112,11 @@ namespace ComputerysProfanityFilter {
             // including consonant doubling and both final -e spellings.
             if (!word.EndsWith("ish", StringComparison.Ordinal)) {
                 forms.Add(string.Concat(word, "ish"));
-                if (EndsWithConsonantVowelConsonant(word)) { forms.Add(word + lastCharacter + "ish"); }
-                if (word.EndsWith("e", StringComparison.Ordinal)) { forms.Add(string.Concat(stem, "ish")); }
+                if (StringHelper.EndsWithConsonantVowelConsonant(word)) { forms.Add(word + lastCharacter + "ish"); }
+                if (endsWithE) { forms.Add(string.Concat(stem, "ish")); }
             }
-
         }
 
-        private static bool EndsWithConsonantVowelConsonant(string word) {
-            if (word.Length < 3) { return false; }
-
-            char lastCharacter = word[^1];
-            return IsConsonant(word[^3]) && IsVowel(word[^2]) && IsConsonant(lastCharacter) && lastCharacter is not ('w' or 'x' or 'y');
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool IsConsonant(char c) => c is >= 'a' and <= 'z' and not ('a' or 'e' or 'i' or 'o' or 'u');
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool IsVowel(char c) => c is 'a' or 'e' or 'i' or 'o' or 'u';
-
-        private void PopulateEncodedWord(string form, HashSet<string> forms) {
-            string encoded = Encode(form);
-            if (encoded.Length > 0) { forms.Add(encoded); }
-        }
-
+        private void AddEncodedForm(string form, HashSet<string> encodedForms) { encodedForms.Add(EncodeTerm(form)); }
     }
 }

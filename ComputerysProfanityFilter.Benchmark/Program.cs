@@ -10,99 +10,158 @@ BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args, DefaultConfig
 
 [MemoryDiagnoser]
 [SimpleJob(RuntimeMoniker.Net10_0, launchCount: 1, warmupCount: 3, iterationCount: 7)]
-public class CensorBenchmarks {
-    [Params(BenchmarkData.ComputerysOwnExpanded, BenchmarkData.StephenOwnExpanded, BenchmarkData.ComputerysStephenRaw, BenchmarkData.StephenStephenRaw)]
-    public string Configuration { get; set; } = null!;
+public class ExpandedVocabularyCensorBenchmarks {
+    [Params(100, 1_000, 10_000, 100_000)] public int MessageLength { get; set; }
 
-    [Params(100, 1_000, 10_000, 100_000)]
-    public int MessageLength { get; set; }
-
-    private Func<string, string> _censor = null!;
+    private ComputeryFilter _computerys = null!;
+    private StephenFilter _stephen = null!;
     private string _input = null!;
 
     [GlobalSetup]
     public void Setup() {
-        _censor = BenchmarkData.CreateCensor(Configuration);
-        _input = BenchmarkData.CreateMessage(MessageLength);
+        _computerys = BenchmarkData.CreateComputerysDefaultFilter();
+        _stephen = BenchmarkData.CreateStephenExpandedFilter();
+        _input = BenchmarkData.CreateTypicalMessage(MessageLength);
     }
 
-    [Benchmark]
-    public int CensorMessage() => _censor(_input).Length;
+    [Benchmark(Baseline = true, Description = "ComputerysProfanityFilter")]
+    public int ComputerysProfanityFilter() => _computerys.Censor(_input).Length;
+
+    [Benchmark(Description = "Profanity.Detector")]
+    public int ProfanityDetector() => _stephen.CensorString(_input).Length;
+}
+
+[MemoryDiagnoser]
+[SimpleJob(RuntimeMoniker.Net10_0, launchCount: 1, warmupCount: 3, iterationCount: 7)]
+public class RawVocabularyCensorBenchmarks {
+    [Params(100, 1_000, 10_000, 100_000)] public int MessageLength { get; set; }
+
+    private ComputeryFilter _computerys = null!;
+    private StephenFilter _stephen = null!;
+    private string _input = null!;
+
+    [GlobalSetup]
+    public void Setup() {
+        _computerys = BenchmarkData.CreateComputerysStephenRawFilter();
+        _stephen = BenchmarkData.CreateStephenDefaultFilter();
+        _input = BenchmarkData.CreateTypicalMessage(MessageLength);
+    }
+
+    [Benchmark(Baseline = true, Description = "ComputerysProfanityFilter")]
+    public int ComputerysProfanityFilter() => _computerys.Censor(_input).Length;
+
+    [Benchmark(Description = "Profanity.Detector")]
+    public int ProfanityDetector() => _stephen.CensorString(_input).Length;
+}
+
+[MemoryDiagnoser]
+[SimpleJob(RuntimeMoniker.Net10_0, launchCount: 1, warmupCount: 3, iterationCount: 7)]
+public class CpuStressCensorBenchmarks {
+    [Params(100, 1_000, 10_000, 100_000)] public int MessageLength { get; set; }
+
+    private ComputeryFilter _filter = null!;
+    private string _input = null!;
+
+    [GlobalSetup]
+    public void Setup() {
+        _filter = BenchmarkData.CreateComputerysDefaultFilter();
+        _input = BenchmarkData.CreateCpuStressMessage(MessageLength);
+    }
+
+    [Benchmark(Description = "ComputerysProfanityFilter")]
+    public int ComputerysProfanityFilter() => _filter.Censor(_input).Length;
 }
 
 [MemoryDiagnoser]
 [SimpleJob(RuntimeMoniker.Net10_0, launchCount: 1, warmupCount: 3, iterationCount: 7)]
 public class ConstructionBenchmarks {
-    [Params(BenchmarkData.ComputerysOwnExpanded, BenchmarkData.StephenOwnExpanded,
-        BenchmarkData.ComputerysStephenRaw, BenchmarkData.StephenStephenRaw)]
-    public string Configuration { get; set; } = null!;
+    [Benchmark(Baseline = true, Description = "ComputerysProfanityFilter / expanded default")]
+    public ComputeryFilter ConstructComputerysDefault() => BenchmarkData.CreateComputerysDefaultFilter();
 
-    [Benchmark]
-    public object ConstructFilter() => BenchmarkData.CreateFilter(Configuration);
+    [Benchmark(Description = "Profanity.Detector / equivalent expanded vocabulary")]
+    public StephenFilter ConstructStephenExpanded() => BenchmarkData.CreateStephenExpandedFilter();
+
+    [Benchmark(Description = "ComputerysProfanityFilter / Profanity.Detector raw vocabulary")]
+    public ComputeryFilter ConstructComputerysStephenRaw() => BenchmarkData.CreateComputerysStephenRawFilter();
+
+    [Benchmark(Description = "Profanity.Detector / raw default vocabulary")]
+    public StephenFilter ConstructStephenDefault() => BenchmarkData.CreateStephenDefaultFilter();
 }
 
 public static class BenchmarkData {
-    public const string ComputerysOwnExpanded = "Computerys / own expanded (5352)";
-    public const string StephenOwnExpanded = "StephenHaunts / own expanded (5352)";
-    public const string ComputerysStephenRaw = "Computerys / StephenHaunts raw source (1626)";
-    public const string StephenStephenRaw = "StephenHaunts / StephenHaunts raw source (1626)";
-    public static readonly string[] Corpus = {
+    private const string CpuStressText = "⚡⚡";
+
+    private static readonly string[] TypicalCorpus = [
+        // Ordinary text and exact whole-word matches.
         "Please keep the conversation friendly and helpful.",
-        "This sentence has a profanity in the middle of otherwise ordinary text.",
-        "Repeated words should not change the result when a message is scanned again.",
-        "Punctuation, commas, and periods surround words in real player chat.",
-        "Multi word expressions are included in this moderately sized benchmark message.",
-        "Obfuscated input such as a$$hole, sh1t, and f-u-c-k should exercise normalization.",
-        "The town of Scunthorpe is included to exercise partial-match handling.",
+        "This sentence has a profanity in the middle of otherwise ordinary text: shit.",
+        "Word boundaries matter: Scunthorpe, xspoiler, spoilerx, and xspoilerx remain ordinary text.",
+
+        // Skippable punctuation, invisible characters, and whitespace obfuscation.
+        "Punctuation surrounds obfuscated words: a.s.s_h-o/l\\e, sh!t, and f-u-c-k.",
+        "Invisible separators include sp\u200Boiler, while whitespace splits sp oil er and s poi ler.",
+        "Punctuation, commas, periods, and symbols !@#$%^ remain realistic workload noise.",
+
+        // Character and multi-character sequence maps (leetspeak and ASCII art).
+        "Character substitutions include 5h1t, a$$h0le, and f4gg0t.",
+        @"ASCII-art substitutions include |\/|@m@, /\/\@m@, and |3an3r.",
+
+        // Repeated-letter collapsing, final-letter extension, and overlapping matches.
+        "Repeated letters include shiiit, fuuuuuck, and assfuckkk without changing the scan shape.",
+        "Overlapping terms such as assfuck and its repeated final letter assfuckk exercise pending matches.",
+        "Separate short matches reset state at whitespace: a a should be scanned independently.",
+
+        // Phrases, generated English forms, and configured hate/self-harm phrases.
+        "Multi word phrases include son of a bitch, kill yourself, and gas the jews.",
+        "Generated forms include fuckers, fucking, fuckish, and assholes.",
+
+        // Compatibility characters and ligatures are normalized before matching.
+        "Compatibility forms include ï½“ï½ï½ï½‰ï½Œï½…ï½’ and ligatures such as oï¬ƒce.",
+
+        // A longer realistic message prevents scanning from finishing immediately.
         "A longer chat line contains several ordinary words before a potentially offensive phrase appears near the end, so scanning cannot finish immediately.",
-        "Numbers 123456 and symbols !@#$%^ should remain realistic workload noise.",
         "Short messages are common in games, but long messages are important too because allocation and scanning costs scale with text length."
-    };
+    ];
 
-    private static readonly string CorpusText = string.Join(" ", Corpus) + " ";
-
-    private static readonly string[] OwnWords = [.. ComputerysProfanityFilter.DefaultProfanityList.Entries];
-    private static readonly string[] OwnExpandedWords = GetOwnExpandedWords(OwnWords);
+    private static readonly string TypicalText = string.Join(" ", TypicalCorpus) + " ";
+    private static readonly string[] OwnExpandedWords = GetOwnExpandedWords();
     private static readonly string[] StephenWords = GetStephenWords();
 
-    public static string CreateMessage(int length) {
+    public static string CreateTypicalMessage(int length) => CreateMessage(TypicalText, length);
+
+    public static string CreateCpuStressMessage(int length) => CreateMessage(CpuStressText, length);
+
+    public static ComputeryFilter CreateComputerysDefaultFilter() => new ComputeryFilter();
+
+    public static StephenFilter CreateStephenExpandedFilter() => new StephenFilter(OwnExpandedWords);
+
+    public static ComputeryFilter CreateComputerysStephenRawFilter() => new ComputeryFilter(
+        StephenWords,
+        ComputerysProfanityFilter.DefaultProfanityList.AllowTerms,
+        false,
+        ComputerysProfanityFilter.DefaultProfanityList.ExpectedCharacters,
+        ComputerysProfanityFilter.DefaultProfanityList.JoinerCharacters,
+        ComputerysProfanityFilter.DefaultProfanityList.BoundaryCharacters,
+        ComputerysProfanityFilter.DefaultProfanityList.CharacterMap,
+        ComputerysProfanityFilter.DefaultProfanityList.SequenceMap
+    );
+
+    public static StephenFilter CreateStephenDefaultFilter() => new StephenFilter();
+
+    private static string CreateMessage(string text, int length) {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(length);
-        int repetitions = (length + CorpusText.Length - 1) / CorpusText.Length;
-        return string.Concat(Enumerable.Repeat(CorpusText, repetitions))[..length];
+        int repetitions = (length + text.Length - 1) / text.Length;
+        return string.Concat(Enumerable.Repeat(text, repetitions))[..length];
     }
 
-    public static Func<string, string> CreateCensor(string configuration) {
-        object filter = CreateFilter(configuration);
-        return filter switch {
-            ComputeryFilter computerys => input => computerys.Censor(input),
-            StephenFilter stephen => stephen.CensorString,
-            _ => throw new InvalidOperationException("Unsupported filter type.")
-        };
-    }
-
-    public static object CreateFilter(string configuration) => configuration switch {
-        ComputerysOwnExpanded => new ComputeryFilter(),
-        StephenOwnExpanded => new StephenFilter(OwnExpandedWords),
-        ComputerysStephenRaw => new ComputeryFilter(
-            boundary: '\uffff',
-            characterMap: ComputerysProfanityFilter.DefaultProfanityList.CharacterMap,
-            sequenceMap: ComputerysProfanityFilter.DefaultProfanityList.SequenceMap,
-            ignorableCharacters: ComputerysProfanityFilter.DefaultProfanityList.IgnorableCharacters,
-            allowsEnglishDouble: ComputerysProfanityFilter.DefaultProfanityList.AllowsDouble,
-            entries: StephenWords,
-            expandEntryForms: false),
-        StephenStephenRaw => new StephenFilter(),
-        _ => throw new ArgumentOutOfRangeException(nameof(configuration), configuration, "Unknown benchmark configuration.")
-    };
-
-    private static string[] GetOwnExpandedWords(string[] words) {
-        ComputeryFilter filter = new ComputeryFilter();
-        MethodInfo method = typeof(ComputeryFilter).GetMethod("PopulateVariations", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        return ((IEnumerable<string>)method.Invoke(filter, [words])!).OrderBy(word => word, StringComparer.Ordinal).ToArray();
+    private static string[] GetOwnExpandedWords() {
+        ComputeryFilter filter = CreateComputerysDefaultFilter();
+        MethodInfo method = typeof(ComputeryFilter).GetMethod("GenerateEncodedVariations", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        return [.. ((IEnumerable<string>)method.Invoke(filter, [ComputerysProfanityFilter.DefaultProfanityList.Terms])!).OrderBy(word => word, StringComparer.Ordinal)];
     }
 
     private static string[] GetStephenWords() {
-        StephenFilter filter = new StephenFilter();
+        StephenFilter filter = CreateStephenDefaultFilter();
         FieldInfo field = filter.GetType().BaseType!.GetField("_wordList", BindingFlags.Instance | BindingFlags.NonPublic)!;
         return [.. (string[])field.GetValue(filter)!];
     }
