@@ -103,7 +103,7 @@ namespace ComputerysProfanityFilter {
 
             // ENGLISH RULE: Final -ie changes to -y before -ing (die -> dying, lie -> lying).
             if (word.EndsWith("ie", StringComparison.Ordinal)) {
-                forms.Add(string.Concat(word.Substring(0, word.Length - 2), "ying"));
+                forms.Add(string.Concat(word[..^2], "ying"));
             }
 
             // ENGLISH RULE: The suffix -ish can form adjectives (fool -> foolish, red -> reddish).
