@@ -1,16 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace ComputerysProfanityFilter {
     public sealed partial class ProfanityList {
-        private HashSet<string> EncodeTermHashSet(IEnumerable<string> terms, bool collapseRepeatedCharacters = true) {
-            HashSet<string> encodedHashSet = new HashSet<string>();
-            foreach (string term in terms) { encodedHashSet.Add(EncodeTerm(term.AsSpan(), collapseRepeatedCharacters)); }
-            return encodedHashSet;
-        }
-
         private string EncodeTerm(ReadOnlySpan<char> term, bool collapseRepeatedCharacters = true) {
             int length = term.Length;
             StringBuilder encoded = new StringBuilder(length);

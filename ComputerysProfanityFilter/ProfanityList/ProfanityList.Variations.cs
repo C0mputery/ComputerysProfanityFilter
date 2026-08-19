@@ -6,24 +6,25 @@ namespace ComputerysProfanityFilter {
     public sealed partial class ProfanityList {
         private static readonly string[] RegularSuffixes = { "ed", "ing", "er" };
 
-        private HashSet<string> GenerateEncodedVariations(IEnumerable<string> terms) {
+        internal Dictionary<string, Pattern> GenerateEncodedVariations(IReadOnlyList<string> terms) {
             if (terms == null) { throw new ArgumentNullException(nameof(terms)); }
 
-            HashSet<string> encodedForms = new HashSet<string>();
-            foreach (string term in terms) {
+            Dictionary<string, Pattern> encodedForms = new Dictionary<string, Pattern>(StringComparer.Ordinal);
+            for (int termOrder = 0; termOrder < terms.Count; termOrder++) {
+                string term = terms[termOrder];
                 if (string.IsNullOrEmpty(term)) { continue; }
                 if (StringHelper.ContainsWhitespace(term)) {
-                    GenerateEncodedPhraseVariations(term, encodedForms);
+                    GenerateEncodedPhraseVariations(term, termOrder, encodedForms);
                     continue;
                 }
 
-                GenerateEncodedWordVariations(term, encodedForms);
+                GenerateEncodedWordVariations(term, termOrder, encodedForms);
             }
 
             return encodedForms;
         }
 
-        private void GenerateEncodedPhraseVariations(string phrase, HashSet<string> encodedForms) {
+        private void GenerateEncodedPhraseVariations(string phrase, int termOrder, Dictionary<string, Pattern> encodedForms) {
             string[] tokens = StringHelper.SplitOnWhitespace(phrase);
             int tokenCount = tokens.Length;
             HashSet<string>[] tokenForms = new HashSet<string>[tokenCount];
@@ -32,25 +33,25 @@ namespace ComputerysProfanityFilter {
                 AddWordForms(tokens[index], tokenForms[index]);
             }
 
-            AddEncodedPhraseCombinations(tokenForms, new string[tokenCount], 0, encodedForms);
+            AddEncodedPhraseCombinations(phrase, termOrder, tokenForms, new string[tokenCount], 0, encodedForms);
         }
 
-        private void AddEncodedPhraseCombinations(HashSet<string>[] tokenForms, string[] selectedForms, int tokenIndex, HashSet<string> encodedForms) {
+        private void AddEncodedPhraseCombinations(string term, int termOrder, HashSet<string>[] tokenForms, string[] selectedForms, int tokenIndex, Dictionary<string, Pattern> encodedForms) {
             if (tokenIndex == tokenForms.Length) {
-                AddEncodedForm(string.Join(' ', selectedForms), encodedForms);
+                AddEncodedForm(string.Join(' ', selectedForms), term, termOrder, encodedForms);
                 return;
             }
 
             foreach (string form in tokenForms[tokenIndex]) {
                 selectedForms[tokenIndex] = form;
-                AddEncodedPhraseCombinations(tokenForms, selectedForms, tokenIndex + 1, encodedForms);
+                AddEncodedPhraseCombinations(term, termOrder, tokenForms, selectedForms, tokenIndex + 1, encodedForms);
             }
         }
 
-        private void GenerateEncodedWordVariations(string word, HashSet<string> encodedForms) {
+        private void GenerateEncodedWordVariations(string word, int termOrder, Dictionary<string, Pattern> encodedForms) {
             HashSet<string> wordForms = new HashSet<string>();
             AddWordForms(word, wordForms);
-            foreach (string variation in wordForms) { AddEncodedForm(variation, encodedForms); }
+            foreach (string variation in wordForms) { AddEncodedForm(variation, word, termOrder, encodedForms); }
         }
 
         private static void AddWordForms(string word, HashSet<string> forms) {
@@ -81,6 +82,8 @@ namespace ComputerysProfanityFilter {
                 forms.Add(string.Concat(stem, "ied"));
                 forms.Add(string.Concat(stem, "ier"));
                 forms.Add(string.Concat(stem, "iest"));
+
+                forms.Add(string.Concat(stem, "ie")); // bleh internet speak
             }
 
             // ENGLISH RULE: Regular verb forms commonly use -ed, -ing, and -er (walk -> walked/walking/walker).
@@ -117,6 +120,8 @@ namespace ComputerysProfanityFilter {
             }
         }
 
-        private void AddEncodedForm(string form, HashSet<string> encodedForms) { encodedForms.Add(EncodeTerm(form)); }
+        private void AddEncodedForm(string form, string term, int termOrder, Dictionary<string, Pattern> encodedForms) {
+            AddEncodedPattern(EncodeTerm(form), term, termOrder, encodedForms);
+        }
     }
 }

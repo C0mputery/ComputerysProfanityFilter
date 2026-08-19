@@ -1,9 +1,62 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
 namespace ComputerysProfanityFilter {
     public sealed partial class ProfanityList {
+        internal sealed class Pattern {
+            internal Pattern(string encoded, string term, int termOrder) {
+                Encoded = encoded;
+                Term = term;
+                TermOrder = termOrder;
+            }
+
+            internal string Encoded { get; }
+            internal string Term { get; }
+            private int TermOrder { get; }
+            internal bool IsPreferredTo(Pattern other) => Term.Length > other.Term.Length || (Term.Length == other.Term.Length && TermOrder < other.TermOrder);
+        }
+
+        private ref struct SourcePositionWindow {
+            private readonly Span<int> _positions;
+
+            internal SourcePositionWindow(Span<int> positions) {
+                _positions = positions;
+                Count = 0;
+            }
+
+            private int Count { get; set; }
+
+            internal void Add(int sourcePosition) {
+                _positions[Count % _positions.Length] = sourcePosition;
+                Count++;
+            }
+
+            internal int FromEnd(int offset) {
+                int index = (Count - 1 - offset) % _positions.Length;
+                return _positions[index];
+            }
+        }
+
+        private sealed class Node {
+            internal Node(Dictionary<char, int> transitions, int[] patternIds, int failureLink) {
+                Transitions = transitions;
+                PatternIds = patternIds;
+                FailureLink = failureLink;
+            }
+
+            internal readonly Dictionary<char, int> Transitions;
+            internal readonly int[] PatternIds;
+            internal readonly int FailureLink;
+        }
+
+        private sealed class NodeBuilder {
+            internal readonly Dictionary<char, int> Transitions = new Dictionary<char, int>();
+            internal readonly List<int> OwnPatternIds = new List<int>();
+            internal readonly List<int> PatternIds = new List<int>();
+            internal int FailureLink;
+        }
+
         private sealed class SequenceTrie {
             private readonly SequenceTrieNode _root = new SequenceTrieNode();
 

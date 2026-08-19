@@ -3,7 +3,13 @@ using System.Collections.ObjectModel;
 using System.Text;
 
 namespace ComputerysProfanityFilter {
+    /// <summary>
+    /// Provides the default profanity terms and character mappings.
+    /// </summary>
     public static class DefaultProfanityList {
+        /// <summary>
+        /// The default profanity terms to detect.
+        /// </summary>
         public static readonly IReadOnlyList<string> Terms = new ReadOnlyCollection<string>(new string[] {
             // swears
             "ass", "ahole", "asshole", "arsehole", "asshat", "asswipe",
@@ -94,6 +100,9 @@ namespace ComputerysProfanityFilter {
             "⚡⚡"
         });
 
+        /// <summary>
+        /// Terms that are exempt from censorship when they appear without repeated characters.
+        /// </summary>
         public static readonly IReadOnlyList<string> AllowTerms = new ReadOnlyCollection<string>(new string[] {
             "as", // ass
             "con", // coon
@@ -101,11 +110,17 @@ namespace ComputerysProfanityFilter {
             "a hole" // ahole
         });
 
+        /// <summary>
+        /// Characters, typically letters, that are expected to make up words.
+        /// </summary>
         public static readonly IReadOnlyCollection<char> ExpectedCharacters = new ReadOnlyCollection<char>(new char[] {
             'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
             'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
         });
 
+        /// <summary>
+        /// Characters that split terms while preserving punctuation-obfuscation matching.
+        /// </summary>
         public static readonly IReadOnlyCollection<char> BoundaryCharacters = new ReadOnlyCollection<char>(new char[] {
             '.', '_', '-', '*', '/', '\\', '~', '^', '=', '`', '\'', '"', ',', ';', ':', '?', '!', '#', '$',
             '%', '&', '+', '@', '|', '¿', '…', '–', '—', '•', '·', '(', ')', '[', ']', '{', '}', '<', '>',
@@ -113,34 +128,10 @@ namespace ComputerysProfanityFilter {
             '、', '。', '〃', '〈', '〉', '《', '》', '「', '」', '『', '』', '【', '】', '〔', '〕',
         });
 
-        public static readonly IReadOnlyCollection<char> JoinerCharacters = CreateJoinerCharacters();
+        /// <summary>
+        /// Maps individual characters to their replacement strings.
+        /// </summary>
         public static readonly IReadOnlyDictionary<char, string> CharacterMap = new ReadOnlyDictionary<char, string>(CreateCharacterMap());
-
-        public static readonly IReadOnlyDictionary<string, string> SequenceMap = new ReadOnlyDictionary<string, string>(CreateSequenceMap());
-
-        private static IReadOnlyCollection<char> CreateJoinerCharacters() {
-            List<char> joinerCharacters = new List<char> {
-                // Invisible
-                '\u00AD', '\u034F', '\u061C', '\u180E', '\u200B', '\u200C', '\u200D', '\u200E', '\u200F',
-                '\u2060', '\u2061', '\u2062', '\u2063', '\u2064', '\u2066', '\u2067', '\u2068', '\u2069', '\uFEFF',
-            };
-
-            AddCharacterRange(joinerCharacters, '\u0300', '\u036F');
-            AddCharacterRange(joinerCharacters, '\uFE00', '\uFE0F');
-
-            for (char character = '0'; character <= '9'; character++) {
-                if (!CharacterMap.ContainsKey(character)) { joinerCharacters.Add(character); }
-            }
-
-            return new ReadOnlyCollection<char>(joinerCharacters);
-        }
-
-        private static void AddCharacterRange(ICollection<char> characters, char first, char last) {
-            for (char character = first; character <= last; character++) {
-                characters.Add(character);
-            }
-        }
-
         private static Dictionary<char, string> CreateCharacterMap() {
             Dictionary<char, string> characterMap = new Dictionary<char, string> {
                 // Single-character mappings, grouped by their mapped value.
@@ -193,7 +184,43 @@ namespace ComputerysProfanityFilter {
             AddCompatibilityCharacterMappings(characterMap, '\u2460', '\u24FF');
             return characterMap;
         }
+        private static void AddCompatibilityCharacterMappings(Dictionary<char, string> characterMap, char first, char last) {
+            for (char character = first; character <= last; character++) {
+                string mapped = GetCompatibilityMapping(character.ToString(), characterMap);
+                if (mapped.Length > 0) { characterMap[character] = mapped; }
+            }
+        }
 
+        /// <summary>
+        /// Characters that are ignored within a term.
+        /// </summary>
+        public static readonly IReadOnlyCollection<char> JoinerCharacters = CreateJoinerCharacters();
+        private static IReadOnlyCollection<char> CreateJoinerCharacters() {
+            List<char> joinerCharacters = new List<char> {
+                // Invisible
+                '\u00AD', '\u034F', '\u061C', '\u180E', '\u200B', '\u200C', '\u200D', '\u200E', '\u200F',
+                '\u2060', '\u2061', '\u2062', '\u2063', '\u2064', '\u2066', '\u2067', '\u2068', '\u2069', '\uFEFF',
+            };
+
+            AddCharacterRange(joinerCharacters, '\u0300', '\u036F');
+            AddCharacterRange(joinerCharacters, '\uFE00', '\uFE0F');
+
+            for (char character = '0'; character <= '9'; character++) {
+                if (!CharacterMap.ContainsKey(character)) { joinerCharacters.Add(character); }
+            }
+
+            return new ReadOnlyCollection<char>(joinerCharacters);
+        }
+        private static void AddCharacterRange(ICollection<char> characters, char first, char last) {
+            for (char character = first; character <= last; character++) {
+                characters.Add(character);
+            }
+        }
+
+        /// <summary>
+        /// Maps character sequences to their replacement strings.
+        /// </summary>
+        public static readonly IReadOnlyDictionary<string, string> SequenceMap = new ReadOnlyDictionary<string, string>(CreateSequenceMap());
         private static Dictionary<string, string> CreateSequenceMap() {
             Dictionary<string, string> sequenceMap = new Dictionary<string, string> {
                 [@"/\/\"] = "m",
@@ -223,14 +250,6 @@ namespace ComputerysProfanityFilter {
 
             return sequenceMap;
         }
-
-        private static void AddCompatibilityCharacterMappings(Dictionary<char, string> characterMap, char first, char last) {
-            for (char character = first; character <= last; character++) {
-                string mapped = GetCompatibilityMapping(character.ToString(), characterMap);
-                if (mapped.Length > 0) { characterMap[character] = mapped; }
-            }
-        }
-
         private static string GetCompatibilityMapping(string value, IReadOnlyDictionary<char, string>? characterMap) {
             string normalized = value.Normalize(NormalizationForm.FormKC);
             StringBuilder mapped = new StringBuilder(normalized.Length);

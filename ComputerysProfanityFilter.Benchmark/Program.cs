@@ -156,8 +156,7 @@ public static class BenchmarkData {
 
     private static string[] GetOwnExpandedWords() {
         ComputeryFilter filter = CreateComputerysDefaultFilter();
-        MethodInfo method = typeof(ComputeryFilter).GetMethod("GenerateEncodedVariations", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        return [.. ((IEnumerable<string>)method.Invoke(filter, [ComputerysProfanityFilter.DefaultProfanityList.Terms])!).OrderBy(word => word, StringComparer.Ordinal)];
+        return [.. filter.GenerateEncodedVariations(ComputerysProfanityFilter.DefaultProfanityList.Terms).Keys.OrderBy(word => word, StringComparer.Ordinal)];
     }
 
     private static string[] GetStephenWords() {
