@@ -108,20 +108,34 @@ namespace ComputerysProfanityFilter {
             char? previous = null;
 
             for (int textIndex = 0; textIndex < input.Length; textIndex++) {
+                ReadOnlySpan<char> remaining = input.AsSpan(textIndex);
+                bool hasSequenceMatch = _sequenceMap.TryGetLongestMatch(
+                    remaining,
+                    out string? mapped,
+                    out int mappedLength,
+                    out bool alwaysCensor
+                );
+                if (alwaysCensor) {
+                    if (CompletePendingMatch()) { return handler; }
+                    if (handler.HandleMatch(textIndex, textIndex + mappedLength - 1, mapped!)) { return handler; }
+
+                    textIndex += mappedLength - 1;
+                    continue;
+                }
+
                 if (char.IsWhiteSpace(input[textIndex])) {
                     if (ResetAtBoundary()) { return handler; }
                     continue;
                 }
 
-                ReadOnlySpan<char> remaining = input.AsSpan(textIndex);
-                if (_sequenceMap.TryGetLongestMatch(remaining, out string? mapped, out int mappedLength)) {
-                    if (_boundaryCharacters.Contains(input[textIndex]) && !CanDirectlyContinueCurrentPattern(mapped)) {
+                if (hasSequenceMatch) {
+                    if (_boundaryCharacters.Contains(input[textIndex]) && !CanDirectlyContinueCurrentPattern(mapped!)) {
                         if (ResetAtBoundary()) { return handler; }
                         textIndex += mappedLength - 1;
                         continue;
                     }
 
-                    EncodeMappedCharacters(ref sourcePositions, mapped, textIndex, textIndex + mappedLength - 1);
+                    if (EncodeMappedCharacters(ref sourcePositions, mapped!, textIndex, textIndex + mappedLength - 1)) { return handler; }
                     textIndex += mappedLength - 1;
                     continue;
                 }
@@ -133,7 +147,7 @@ namespace ComputerysProfanityFilter {
                         continue;
                     }
 
-                    EncodeMappedCharacters(ref sourcePositions, mapped, textIndex, textIndex);
+                    if (EncodeMappedCharacters(ref sourcePositions, mapped, textIndex, textIndex)) { return handler; }
                     continue;
                 }
 
@@ -149,14 +163,17 @@ namespace ComputerysProfanityFilter {
                     continue;
                 }
 
-                AppendEncodedCharacter(ref sourcePositions, character, textIndex, textIndex);
+                if (AppendEncodedCharacter(ref sourcePositions, character, textIndex, textIndex)) { return handler; }
             }
             CompletePendingMatch();
 
             return handler;
 
-            void EncodeMappedCharacters(ref SourcePositionWindow positions, string mapped, int start, int end) {
-                foreach (char mappedCharacter in mapped) { AppendEncodedCharacter(ref positions, mappedCharacter, start, end); }
+            bool EncodeMappedCharacters(ref SourcePositionWindow positions, string mapped, int start, int end) {
+                foreach (char mappedCharacter in mapped) {
+                    if (AppendEncodedCharacter(ref positions, mappedCharacter, start, end)) { return true; }
+                }
+                return false;
             }
 
             bool CanDirectlyContinueCurrentPattern(string mapped) {
@@ -178,11 +195,11 @@ namespace ComputerysProfanityFilter {
                 return shouldStop;
             }
 
-            void AppendEncodedCharacter(ref SourcePositionWindow positions, char character, int start, int end) {
+            bool AppendEncodedCharacter(ref SourcePositionWindow positions, char character, int start, int end) {
                 bool repeatsPrevious = character == previous;
                 if (repeatsPrevious) {
                     ExtendPendingMatches(end);
-                    return;
+                    return false;
                 }
 
                 previous = character;
@@ -191,7 +208,7 @@ namespace ComputerysProfanityFilter {
                 positions.Add(start);
 
                 while (nodeIndex != 0 && !_nodes[nodeIndex].Transitions.ContainsKey(character)) { nodeIndex = _nodes[nodeIndex].FailureLink; }
-                if (nodeIndex == 0 && !mayStartPattern) { return; }
+                if (nodeIndex == 0 && !mayStartPattern) { return false; }
                 if (_nodes[nodeIndex].Transitions.TryGetValue(character, out int nextNodeIndex)) { nodeIndex = nextNodeIndex; }
 
                 foreach (int patternId in _nodes[nodeIndex].PatternIds) {
@@ -208,15 +225,16 @@ namespace ComputerysProfanityFilter {
                 }
 
                 mayStartPattern = false;
+                return false;
             }
 
             bool CompletePendingMatch() {
                 if (!hasPendingMatch) { return false; }
 
                 bool matched = !IsAllowedMatch();
-                if (matched) { handler.HandleMatch(pendingMatchStart, pendingMatchEnd, pendingPattern!); }
+                bool shouldStop = matched && handler.HandleMatch(pendingMatchStart, pendingMatchEnd, pendingPattern!.Term);
                 ClearPendingMatches();
-                return matched && handler.StopAtFirst;
+                return shouldStop;
             }
 
             bool IsAllowedMatch() {
@@ -240,8 +258,7 @@ namespace ComputerysProfanityFilter {
         }
 
         private interface IMatchHandler {
-            bool StopAtFirst { get; }
-            void HandleMatch(int start, int end, Pattern pattern);
+            bool HandleMatch(int start, int end, string term);
         }
     }
 }

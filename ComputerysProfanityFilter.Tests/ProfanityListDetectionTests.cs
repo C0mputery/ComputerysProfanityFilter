@@ -14,6 +14,75 @@ public sealed class ProfanityListDetectionTests {
     }
 
     [Fact]
+    public void DefaultFilter_DetectsEveryDefaultTerm() {
+        ProfanityList filter = new ProfanityList();
+
+        foreach (string term in DefaultProfanityList.Terms) {
+            Assert.True(filter.HasProfanity(term), $"Default filter did not detect '{term}'.");
+        }
+    }
+
+    [Fact]
+    public void DefaultFilter_AlwaysCensorsHateSymbolsInsideWords() {
+        ProfanityList filter = new ProfanityList();
+
+        foreach (string term in DefaultProfanityList.AlwaysCensorTerms) {
+            string input = $"prefix{term}suffix";
+            Assert.True(filter.HasProfanity(input), $"Default filter did not detect '{term}'.");
+            Assert.Equal($"prefix{new string('#', term.Length)}suffix", filter.Censor(input));
+
+            ProfanityMatch match = Assert.Single(filter.DetectAllProfanities(input));
+            Assert.Equal((6, 6 + term.Length, term), (match.Start, match.End, match.Term));
+        }
+    }
+
+    [Fact]
+    public void AlwaysCensorTerms_MatchInsideWordsIndependentOfNormalTerms() {
+        ProfanityList filter = new ProfanityList(
+            terms: ["symbolic"],
+            allowTerms: [],
+            alwaysCensorTerms: ["symbol"],
+            expandTermForms: false
+        );
+
+        Assert.Equal("prefix######icsuffix", filter.Censor("prefixsymbolicsuffix"));
+        ProfanityMatch match = Assert.Single(filter.DetectAllProfanities("prefixsymbolicsuffix"));
+        Assert.Equal((6, 12, "symbol"), (match.Start, match.End, match.Term));
+    }
+
+    [Fact]
+    public void CustomFilter_DoesNotSilentlyUseDefaultAlwaysCensorTerms() {
+        ProfanityList filter = new ProfanityList(["spoiler"], expandTermForms: false);
+        string symbol = DefaultProfanityList.AlwaysCensorTerms[0];
+
+        Assert.False(filter.HasProfanity($"prefix{symbol}suffix"));
+    }
+
+    [Fact]
+    public void AlwaysCensorSymbols_DoNotSuppressAdjacentNormalMatches() {
+        ProfanityList filter = new ProfanityList(
+            terms: ["bad"],
+            allowTerms: [],
+            alwaysCensorTerms: ["☃"],
+            expandTermForms: false
+        );
+
+        Assert.Equal("####", filter.Censor("bad☃"));
+        Assert.Collection(
+            filter.DetectAllProfanities("bad☃"),
+            match => Assert.Equal((0, 3, "bad"), (match.Start, match.End, match.Term)),
+            match => Assert.Equal((3, 4, "☃"), (match.Start, match.End, match.Term))
+        );
+    }
+
+    [Fact]
+    public void AlwaysCensorTerms_AreIgnoredWhenMatchingNormalTerms() {
+        ProfanityList filter = new ProfanityList();
+
+        Assert.Equal("#####", filter.Censor("fꖦuck"));
+    }
+
+    [Fact]
     public void DetectAllProfanities_ReturnsObfuscatedAndRepeatedTermsInSourceOrder() {
         ProfanityList filter = CreateFilter(["shit", "fool"], new Dictionary<char, string> { ['!'] = "i" });
 
@@ -64,6 +133,7 @@ public sealed class ProfanityListDetectionTests {
         IEnumerable<string>? allowTerms = null,
         bool expandTermForms = false) => new ProfanityList(
         terms,
+        Array.Empty<string>(),
         allowTerms ?? [],
         expandTermForms,
         "abcdefghijklmnopqrstuvwxyz",

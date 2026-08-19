@@ -8,7 +8,7 @@ namespace ComputerysProfanityFilter {
         /// <summary>
         /// Creates a profanity list using the default terms and matching settings.
         /// </summary>
-        public ProfanityList() : this(DefaultProfanityList.Terms) { }
+        public ProfanityList() : this(DefaultProfanityList.Terms, DefaultProfanityList.AlwaysCensorTerms) { }
 
         /// <summary>
         /// Creates a profanity list using the supplied terms and default matching settings.
@@ -16,19 +16,35 @@ namespace ComputerysProfanityFilter {
         /// <param name="terms">The terms to detect.</param>
         /// <param name="expandTermForms">Whether to include common plural, tense, and suffix forms.</param>
         /// <exception cref="ArgumentNullException"><paramref name="terms"/> is <see langword="null"/>.</exception>
-        public ProfanityList(IEnumerable<string> terms, bool expandTermForms = true) : this(terms, DefaultProfanityList.AllowTerms, expandTermForms) { }
+        public ProfanityList(IEnumerable<string> terms, bool expandTermForms = true) : this(
+            terms, Array.Empty<string>(),
+            DefaultProfanityList.AllowTerms,
+            expandTermForms
+        ) { }
+
+
+        /// <summary>
+        /// Creates a profanity list using the supplied terms and default matching settings.
+        /// </summary>
+        /// <param name="terms">The terms to detect.</param>
+        /// <param name="alwaysCensorTerms">Literal terms that should match at any position and be ignored while matching other terms.</param>
+        /// <param name="expandTermForms">Whether to include common plural, tense, and suffix forms.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="terms"/> is <see langword="null"/>.</exception>
+        public ProfanityList(IEnumerable<string> terms, IEnumerable<string> alwaysCensorTerms, bool expandTermForms = true) : this(terms, alwaysCensorTerms, DefaultProfanityList.AllowTerms, expandTermForms) { }
 
         /// <summary>
         /// Creates a profanity list using the supplied terms and allow terms with default matching settings.
         /// </summary>
         /// <param name="terms">The terms to detect.</param>
+        /// <param name="alwaysCensorTerms">Literal terms that should match at any position and be ignored while matching other terms.</param>
         /// <param name="allowTerms">Terms that should not match when they appear without repeated characters.</param>
         /// <param name="expandTermForms">Whether to include common plural, tense, and suffix forms.</param>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="terms"/> or <paramref name="allowTerms"/> is <see langword="null"/>.
         /// </exception>
-        public ProfanityList(IEnumerable<string> terms, IEnumerable<string> allowTerms, bool expandTermForms = true) : this(
+        public ProfanityList(IEnumerable<string> terms, IEnumerable<string> alwaysCensorTerms, IEnumerable<string> allowTerms, bool expandTermForms = true) : this(
             terms,
+            alwaysCensorTerms,
             allowTerms,
             expandTermForms,
             DefaultProfanityList.ExpectedCharacters,
@@ -42,6 +58,7 @@ namespace ComputerysProfanityFilter {
         /// Creates a profanity list with fully customized matching settings.
         /// </summary>
         /// <param name="terms">The terms to detect.</param>
+        /// <param name="alwaysCensorTerms">Literal terms that should match at any position and be ignored while matching other terms.</param>
         /// <param name="allowTerms">Terms that should not match when they appear without repeated characters.</param>
         /// <param name="expandTermForms">Whether to include common plural, tense, and suffix forms.</param>
         /// <param name="expectedCharacters">Characters that are normally part of words.</param>
@@ -55,6 +72,7 @@ namespace ComputerysProfanityFilter {
         /// </exception>
         public ProfanityList(
             IEnumerable<string> terms,
+            IEnumerable<string> alwaysCensorTerms,
             IEnumerable<string> allowTerms,
             bool expandTermForms,
             IEnumerable<char> expectedCharacters,
@@ -65,6 +83,7 @@ namespace ComputerysProfanityFilter {
         ) {
             if (terms == null) { throw new ArgumentNullException(nameof(terms)); }
             if (allowTerms == null) { throw new ArgumentNullException(nameof(allowTerms)); }
+            if (alwaysCensorTerms == null) { throw new ArgumentNullException(nameof(alwaysCensorTerms)); }
             if (expectedCharacters == null) { throw new ArgumentNullException(nameof(expectedCharacters)); }
             if (joinerCharacters == null) { throw new ArgumentNullException(nameof(joinerCharacters)); }
             if (boundaryCharacters == null) { throw new ArgumentNullException(nameof(boundaryCharacters)); }
@@ -78,13 +97,13 @@ namespace ComputerysProfanityFilter {
                 throw new ArgumentException("Joiner and boundary characters must not overlap.");
             }
             _characterMap = new Dictionary<char, string>();
-            foreach (KeyValuePair<char, string> characterMapEntry in characterMap) {
-                _characterMap[char.ToLowerInvariant(characterMapEntry.Key)] = CollapseRepeatedCharacters(characterMapEntry.Value);
+            foreach ((char key, string value) in characterMap) {
+                _characterMap[char.ToLowerInvariant(key)] = CollapseRepeatedCharacters(value);
             }
 
             _sequenceMap = new SequenceTrie();
-            foreach (KeyValuePair<string, string> sequenceMapEntry in sequenceMap) {
-                _sequenceMap.Add(sequenceMapEntry.Key, CollapseRepeatedCharacters(sequenceMapEntry.Value));
+            foreach ((string key, string value) in sequenceMap) {
+                _sequenceMap.Add(key, CollapseRepeatedCharacters(value), false);
             }
 
             HashSet<string> uniqueAllowTerms = new HashSet<string>(StringComparer.Ordinal);
@@ -100,28 +119,56 @@ namespace ComputerysProfanityFilter {
 
             List<string> sourceTerms = new List<string>();
             foreach (string term in terms) { sourceTerms.Add(term); }
+            List<string> sourceAlwaysCensorTerms = new List<string>();
+            HashSet<string> seenAlwaysCensorTerms = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (string term in alwaysCensorTerms) {
+                if (seenAlwaysCensorTerms.Add(term)) { sourceAlwaysCensorTerms.Add(term); }
+            }
+
             Dictionary<string, Pattern> encodedTerms = expandTermForms ? GenerateEncodedVariations(sourceTerms) : EncodeTerms(sourceTerms);
             if (encodedTerms.Count == 0) {
                 throw new ArgumentException("At least one term that produces a non-empty pattern is required.", nameof(terms));
             }
 
+            for (int index = 0; index < sourceAlwaysCensorTerms.Count; index++) {
+                string term = sourceAlwaysCensorTerms[index];
+                if (term.Length == 0) { continue; }
+
+                _sequenceMap.Add(term, term, true);
+            }
             InitializeAhoCorasick(encodedTerms.Values);
+
         }
 
         private Dictionary<string, Pattern> EncodeTerms(IReadOnlyList<string> terms) {
             Dictionary<string, Pattern> encodedTerms = new Dictionary<string, Pattern>(StringComparer.Ordinal);
-            for (int index = 0; index < terms.Count; index++) { AddEncodedPattern(EncodeTerm(terms[index].AsSpan()), terms[index], index, encodedTerms); }
+            for (int index = 0; index < terms.Count; index++) {
+                AddEncodedPattern(EncodeTerm(terms[index].AsSpan()), terms[index], index, encodedTerms);
+            }
             return encodedTerms;
         }
 
         private static void AddEncodedPattern(string encoded, string term, int termOrder, Dictionary<string, Pattern> patterns) {
-            Pattern pattern = new Pattern(encoded, term, termOrder);
+            AddEncodedPattern(encoded, term, new Pattern(encoded, term, termOrder), patterns);
+        }
+
+        private static void AddEncodedPattern(string encoded, string term, Pattern pattern, Dictionary<string, Pattern> patterns) {
             if (!patterns.TryGetValue(encoded, out Pattern? existing) || pattern.IsPreferredTo(existing)) { patterns[encoded] = pattern; }
         }
 
         private static HashSet<char> NormalizedCharHashSet(IEnumerable<char> terms) {
             HashSet<char> normalizedChars = new HashSet<char>();
             foreach (char c in terms) { normalizedChars.Add(char.ToLowerInvariant(c)); }
+            return normalizedChars;
+        }
+
+        private static HashSet<char> NormalizedCharHashSet(IEnumerable<string> terms) {
+            HashSet<char> normalizedChars = new HashSet<char>();
+            foreach (string term in terms) {
+                foreach (char c in term) {
+                    if (char.IsLetterOrDigit(c)) { normalizedChars.Add(char.ToLowerInvariant(c)); }
+                }
+            }
             return normalizedChars;
         }
 

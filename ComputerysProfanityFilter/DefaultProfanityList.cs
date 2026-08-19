@@ -92,6 +92,12 @@ namespace ComputerysProfanityFilter {
             // self-harm
             "kill yourself", "kill your self", "kill you're self", "kys",
 
+        });
+
+        /// <summary>
+        /// Literal terms that are censored at any position and ignored when matching other terms.
+        /// </summary>
+        public static readonly IReadOnlyList<string> AlwaysCensorTerms = new ReadOnlyCollection<string>(new string[] {
             // hate symbols
             "卐", "卍",
             "\u0fd5", "\u0fd6", "\u0fd7", "\u0fd8", // Google says they're swastika's, so we need to filter them.

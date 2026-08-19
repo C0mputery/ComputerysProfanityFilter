@@ -42,7 +42,7 @@ namespace ComputerysProfanityFilter {
         private readonly Dictionary<char, string> _characterMap;
 
         /// <summary>
-        /// Maps character sequences to their replacement strings.
+        /// Maps character sequences to their replacement strings and literal always-censor terms.
         /// </summary>
         private readonly SequenceTrie _sequenceMap;
 
@@ -70,8 +70,7 @@ namespace ComputerysProfanityFilter {
                 _censoredCharacters = null;
             }
 
-            public bool StopAtFirst => false;
-            public void HandleMatch(int start, int end, Pattern pattern) {
+            public bool HandleMatch(int start, int end, string term) {
                 if (_censoredCharacters == null) {
                     _censoredCharacters = ArrayPool<char>.Shared.Rent(Math.Max(_input.Length, MinimumCensorBufferSize));
                     _input.CopyTo(0, _censoredCharacters, 0, _input.Length);
@@ -79,6 +78,7 @@ namespace ComputerysProfanityFilter {
                 for (int index = start; index <= end; index++) {
                     _censoredCharacters[index] = _censorCharacter;
                 }
+                return false;
             }
             internal string GetResult() => _censoredCharacters == null ? _input : new string(_censoredCharacters, 0, _input.Length);
 
@@ -104,8 +104,10 @@ namespace ComputerysProfanityFilter {
 
         private struct FirstMatchHandler : IMatchHandler {
             internal bool Found;
-            public bool StopAtFirst => true;
-            public void HandleMatch(int start, int end, Pattern pattern) { Found = true; }
+            public bool HandleMatch(int start, int end, string term) {
+                Found = true;
+                return true;
+            }
         }
 
 
@@ -120,15 +122,17 @@ namespace ComputerysProfanityFilter {
 
             List<ProfanityMatch> matches = new List<ProfanityMatch>();
             CollectMatchesHandler handler = new CollectMatchesHandler(matches);
-            ScanForProfanity(input, handler);
+            handler = ScanForProfanity(input, handler);
             return matches.Count == 0 ? Array.Empty<ProfanityMatch>() : matches.AsReadOnly();
         }
 
         private readonly struct CollectMatchesHandler : IMatchHandler {
             private readonly List<ProfanityMatch> _matches;
             internal CollectMatchesHandler(List<ProfanityMatch> matches) { _matches = matches; }
-            public bool StopAtFirst => false;
-            public void HandleMatch(int start, int end, Pattern pattern) => _matches.Add(new ProfanityMatch(start, end + 1, pattern.Term));
+            public bool HandleMatch(int start, int end, string term) {
+                _matches.Add(new ProfanityMatch(start, end + 1, term));
+                return false;
+            }
         }
     }
 }

@@ -82,7 +82,7 @@ string censored = filter.Censor("S-p-o-i-l-e-r ahead");
 ## Default configuration
 
 `DefaultProfanityList` exposes the built-in settings as read-only collections for reuse in custom filters:
-`Terms`, `AllowTerms`, `ExpectedCharacters`, `JoinerCharacters`, `BoundaryCharacters`, `CharacterMap`, and `SequenceMap`.
+`Terms`, `AlwaysCensorTerms`, `AllowTerms`, `ExpectedCharacters`, `JoinerCharacters`, `BoundaryCharacters`, `CharacterMap`, and `SequenceMap`.
 Allow terms are compared to the original matched text using lowercase-invariant normalization only.
 
 ### Allocation behavior

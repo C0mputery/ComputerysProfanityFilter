@@ -16,7 +16,7 @@ namespace ComputerysProfanityFilter {
                     continue;
                 }
 
-                if (_sequenceMap.TryGetLongestMatch(term.Slice(index, length - index), out string? mapped, out int mappedLength)) {
+                if (_sequenceMap.TryGetLongestMatch(term.Slice(index, length - index), out string? mapped, out int mappedLength, out _)) {
                     index += mappedLength;
                     foreach (char mappedCharacter in mapped) { AppendEncodedTermCharacter(mappedCharacter); }
                 }

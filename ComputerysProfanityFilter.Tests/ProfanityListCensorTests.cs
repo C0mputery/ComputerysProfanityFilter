@@ -2,6 +2,21 @@ using Xunit;
 
 namespace ComputerysProfanityFilter.Tests;
 
+public sealed class DefaultCensorTests {
+    [Fact]
+    [Trait("Feature", "Default terms")]
+    public void DefaultFilter_CensorsEveryDefaultAlwaysCensorTerm() {
+        ProfanityList filter = new ProfanityList();
+
+        foreach (string term in DefaultProfanityList.AlwaysCensorTerms) {
+            string input = $"prefix{term}suffix";
+            string expected = $"prefix{new string('#', term.Length)}suffix";
+
+            Assert.Equal(expected, filter.Censor(input));
+        }
+    }
+}
+
 public sealed class CensorExactMatchingTests {
     [Theory]
     [Trait("Feature", "Exact matching")]
@@ -129,6 +144,7 @@ public sealed class CensorObfuscationTests {
     public void Censor_UsesCallerConfiguredJoinersAndBoundaries(string input, string expected) {
         ProfanityList filter = new ProfanityList(
             terms: ["shit"],
+            alwaysCensorTerms: DefaultProfanityList.AlwaysCensorTerms,
             allowTerms: DefaultProfanityList.AllowTerms,
             expandTermForms: false,
             expectedCharacters: DefaultProfanityList.ExpectedCharacters,

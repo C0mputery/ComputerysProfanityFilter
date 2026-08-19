@@ -60,7 +60,7 @@ namespace ComputerysProfanityFilter {
         private sealed class SequenceTrie {
             private readonly SequenceTrieNode _root = new SequenceTrieNode();
 
-            internal void Add(string sequence, string mappedValue) {
+            internal void Add(string sequence, string matchValue, bool alwaysCensor) {
                 SequenceTrieNode sequenceTrieNode = _root;
                 foreach (char character in sequence) {
                     char normalized = char.ToLowerInvariant(character);
@@ -72,21 +72,29 @@ namespace ComputerysProfanityFilter {
                     sequenceTrieNode = child;
                 }
 
-                sequenceTrieNode.MappedValue = mappedValue;
+                sequenceTrieNode.MatchValue = matchValue;
+                sequenceTrieNode.AlwaysCensor = alwaysCensor;
             }
 
-            internal bool TryGetLongestMatch(ReadOnlySpan<char> value, [NotNullWhen(true)] out string? mappedValue, out int matchedLength) {
+            internal bool TryGetLongestMatch(
+                ReadOnlySpan<char> value,
+                [NotNullWhen(true)] out string? matchValue,
+                out int matchedLength,
+                out bool alwaysCensor
+            ) {
                 SequenceTrieNode sequenceTrieNode = _root;
-                mappedValue = null;
+                matchValue = null;
                 matchedLength = 0;
+                alwaysCensor = false;
 
                 for (int index = 0; index < value.Length; index++) {
                     char normalized = char.ToLowerInvariant(value[index]);
                     if (!sequenceTrieNode.Children.TryGetValue(normalized, out sequenceTrieNode)) { break; }
-                    if (sequenceTrieNode.MappedValue == null) { continue; }
+                    if (sequenceTrieNode.MatchValue == null) { continue; }
 
-                    mappedValue = sequenceTrieNode.MappedValue;
+                    matchValue = sequenceTrieNode.MatchValue;
                     matchedLength = index + 1;
+                    alwaysCensor = sequenceTrieNode.AlwaysCensor;
                     if (sequenceTrieNode.Children.Count == 0) { return true; }
                 }
 
@@ -95,7 +103,8 @@ namespace ComputerysProfanityFilter {
 
             private sealed class SequenceTrieNode {
                 internal readonly Dictionary<char, SequenceTrieNode> Children = new Dictionary<char, SequenceTrieNode>();
-                internal string? MappedValue;
+                internal string? MatchValue;
+                internal bool AlwaysCensor;
             }
         }
     }

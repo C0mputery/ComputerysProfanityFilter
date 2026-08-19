@@ -137,6 +137,7 @@ public static class BenchmarkData {
 
     public static ComputeryFilter CreateComputerysStephenRawFilter() => new ComputeryFilter(
         StephenWords,
+        ComputerysProfanityFilter.DefaultProfanityList.AlwaysCensorTerms,
         ComputerysProfanityFilter.DefaultProfanityList.AllowTerms,
         false,
         ComputerysProfanityFilter.DefaultProfanityList.ExpectedCharacters,
