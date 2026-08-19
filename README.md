@@ -76,7 +76,7 @@ Under typical use conditions, it will only allocate a string of the same size in
 
 BenchmarkDotNet 0.15.8 results with .NET 10.0.10 on
 an AMD Ryzen 7 5800X (Windows 11). The suite compares this library with
-[`Profanity.Detector` 0.1.8](https://github.com/stephenhaunts/ProfanityDetector)
+[`Profanity.Detector 0.1.8`](https://github.com/stephenhaunts/ProfanityDetector)
 using equivalent vocabularies. Inputs are exactly 100, 1,000, 10,000, or
 100,000 characters, made by repeating a fixed 10-message chat corpus containing
 ordinary, profane, and obfuscated text.
