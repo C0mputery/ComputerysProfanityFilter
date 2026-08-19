@@ -4,7 +4,7 @@ A .NET Standard 2.1 (C# version 9 for unity) profanity filter that censors known
 obfuscations such as character substitutions, punctuation, inserted whitespace, repeated letters, and leetspeak.
 The [default word/phrase list](ComputerysProfanityFilter/DefaultProfanityList.cs) is reasonable and covers swears, hate speech, and self-harm.
 
-This library is currently used in [STRAFTAT](https://store.steampowered.com/app/2386720/STRAFTAT/) (as of the 1.4.9 update) to filter text chat, player names, lobby names, etc, albeit with a slightly cut down word list.
+This library is currently used in [STRAFTAT](https://store.steampowered.com/app/2386720/STRAFTAT/) (as of the 1.4.9 update) to filter text chat, player names, lobby names, etc, albeit with a slightly cut down word list (swears removed).
 
 ## Basic usage
 Create one `ProfanityList` and reuse it when filtering messages.
