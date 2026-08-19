@@ -118,37 +118,27 @@ namespace ComputerysProfanityFilter {
 
         public static readonly IReadOnlyDictionary<string, string> SequenceMap = new ReadOnlyDictionary<string, string>(CreateSequenceMap());
 
-        /// <summary>
-        /// Legacy union of <see cref="BoundaryCharacters"/> and <see cref="JoinerCharacters"/>.
-        /// </summary>
-        public static readonly IReadOnlyCollection<char> SkippableCharacters = new ReadOnlyCollection<char>(CreateSkippableCharacters());
-
-        private static char[] CreateSkippableCharacters() {
-            List<char> characters = new List<char>(BoundaryCharacters) {
+        private static IReadOnlyCollection<char> CreateJoinerCharacters() {
+            List<char> joinerCharacters = new List<char> {
                 // Invisible
                 '\u00AD', '\u034F', '\u061C', '\u180E', '\u200B', '\u200C', '\u200D', '\u200E', '\u200F',
                 '\u2060', '\u2061', '\u2062', '\u2063', '\u2064', '\u2066', '\u2067', '\u2068', '\u2069', '\uFEFF',
             };
 
-            AddCharacterRange(characters, '\u0300', '\u036F');
-            AddCharacterRange(characters, '\uFE00', '\uFE0F');
-            return characters.ToArray();
+            AddCharacterRange(joinerCharacters, '\u0300', '\u036F');
+            AddCharacterRange(joinerCharacters, '\uFE00', '\uFE0F');
+
+            for (char character = '0'; character <= '9'; character++) {
+                if (!CharacterMap.ContainsKey(character)) { joinerCharacters.Add(character); }
+            }
+
+            return new ReadOnlyCollection<char>(joinerCharacters);
         }
 
         private static void AddCharacterRange(ICollection<char> characters, char first, char last) {
             for (char character = first; character <= last; character++) {
                 characters.Add(character);
             }
-        }
-
-        private static IReadOnlyCollection<char> CreateJoinerCharacters() {
-            HashSet<char> boundaryCharacters = new HashSet<char>(BoundaryCharacters);
-            List<char> joinerCharacters = new List<char>();
-            foreach (char character in CreateSkippableCharacters()) {
-                if (!boundaryCharacters.Contains(character)) { joinerCharacters.Add(character); }
-            }
-
-            return new ReadOnlyCollection<char>(joinerCharacters);
         }
 
         private static Dictionary<char, string> CreateCharacterMap() {

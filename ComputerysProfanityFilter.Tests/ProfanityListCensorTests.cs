@@ -81,6 +81,8 @@ public sealed class CensorObfuscationTests {
     [InlineData("sp0!l3r", "#######")]
     [InlineData("5p0!l3r", "#######")]
     [InlineData("SP0!L3R", "#######")]
+    [InlineData("sp6oiler", "########")]
+    [InlineData("sp9oiler", "########")]
     public void Censor_NormalizesCharacterSubstitutions(string input, string expected) {
         Assert.Equal(expected, CreateFilter("spoiler").Censor(input));
     }
