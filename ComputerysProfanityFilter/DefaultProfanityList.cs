@@ -88,7 +88,7 @@ namespace ComputerysProfanityFilter {
 
             // hate symbols
             "卐", "卍",
-            "࿕", "࿖", "࿗", "࿘", // Google says they're swastika's, so we need to filter them.
+            "\u0fd5", "\u0fd6", "\u0fd7", "\u0fd8", // Google says they're swastika's, so we need to filter them.
             "ꖦ",
             "ᛋᛋ",
             "⚡⚡"
@@ -108,9 +108,9 @@ namespace ComputerysProfanityFilter {
 
         public static readonly IReadOnlyCollection<char> BoundaryCharacters = new ReadOnlyCollection<char>(new char[] {
             '.', '_', '-', '*', '/', '\\', '~', '^', '=', '`', '\'', '"', ',', ';', ':', '?', '!', '#', '$',
-            '%', '&', '+', '@', '|', '\u00BF', '\u2026', '\u2013', '\u2014', '\u2022', '\u00B7', '(', ')', '[', ']', '{', '}', '<', '>',
-            '\u2010', '\u2011', '\u2012', '\u2015', '\u203D', '\u2043', '\u201A', '\u201E', '\u201F', '\u2018', '\u2019', '\u201C', '\u201D', '\u2039', '\u203A',
-            '\u3001', '\u3002', '\u3003', '\u3008', '\u3009', '\u300A', '\u300B', '\u300C', '\u300D', '\u300E', '\u300F', '\u3010', '\u3011', '\u3014', '\u3015',
+            '%', '&', '+', '@', '|', '¿', '…', '–', '—', '•', '·', '(', ')', '[', ']', '{', '}', '<', '>',
+            '‐', '‑', '‒', '―', '‽', '⁃', '‚', '„', '‟', '‘', '’', '“', '”', '‹', '›',
+            '、', '。', '〃', '〈', '〉', '《', '》', '「', '」', '『', '』', '【', '】', '〔', '〕',
         });
 
         public static readonly IReadOnlyCollection<char> JoinerCharacters = CreateJoinerCharacters();
@@ -189,7 +189,8 @@ namespace ComputerysProfanityFilter {
                 ['ﬁ'] = "fi",
                 ['ﬂ'] = "fl",
                 ['œ'] = "oe",
-                ['ﬅ'] = "st", ['ﬆ'] = "st",
+                ['ﬅ'] = "ft",
+                ['ﬆ'] = "st",
                 ['þ'] = "th",
             };
 
