@@ -7,8 +7,9 @@ The [default word/phrase list](ComputerysProfanityFilter/DefaultProfanityList.cs
 This library is currently used in [STRAFTAT](https://store.steampowered.com/app/2386720/STRAFTAT/) (as of the 1.4.9 update) to filter text chat, player names, lobby names, etc, albeit with a slightly cut down word list.
 
 ## Basic usage
-Create one `ProfanityList` and reuse it when filtering messages. `Censor` returns the original
-string unchanged when it finds no match.
+Create one `ProfanityList` and reuse it when filtering messages.
+After construction, the instance can be used concurrently from multiple threads.
+`Censor` returns the original string unchanged when it finds no match.
 ```csharp
 using ComputerysProfanityFilter;
 
@@ -26,6 +27,13 @@ string censored = profanityFilter.Censor("Please don't be an a$$hole.", '*');
 Matching flexable, case-insensitive, it'll normalizes many substitutions (1337 speak, common enlgish rules),
 ignores selected punctuation within words, and collapses consecutive repeated letters.
 Entire matches, including their intervening punctuation, are replaced with the censor character.
+
+Matching flexable, case-insensitive, it'll normalizes many substitutions (1337 speak, common enlgish rules).
+Punctuation and whitespace may be inserted within words and phrases without preventing a match.
+Consecutive repeated letters are collapsed, so variants such as `foooool` can match `fool`.
+Matchs are as terms rather than arbitrary substrings, avoiding the Scunthorpe problem, `cunt` does not match inside `Scunthorpe`.
+Recognized punctuation can also act as a boundary between terms.
+Entire matches, including intervening whitespace and punctuation, are replaced with the censor character.
 
 ## Custom term list
 Pass your own terms and normalization rules to the constructor.
