@@ -1,0 +1,22 @@
+{
+  "name": "com.computery.profanity-filter",
+  "version": "1.1.0",
+  "displayName": "Computery's Profanity Filter",
+  "description": "A .NET Standard 2.1 profanity filter that censors known terms while recognizing common obfuscations such as character substitutions, punctuation, inserted whitespace, repeated letters, and leetspeak.",
+  "unity": "2021.3",
+  "keywords": [
+    "chat-moderation",
+    "content-moderation",
+    "csharp",
+    "dotnet",
+    "dotnet-standard",
+    "performance",
+    "profanity-filter",
+    "text-filtering",
+    "unity"
+  ],
+  "author": {
+    "name": "Computery",
+    "url": "https://github.com/C0mputery"
+  }
+}
