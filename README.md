@@ -6,6 +6,21 @@ The [default term list](ComputerysProfanityFilter/DefaultProfanityList.cs) is re
 
 This library is currently used in [STRAFTAT](https://store.steampowered.com/app/2386720/STRAFTAT/) (as of the 1.4.9 update) to filter text chat, player names, lobby names, etc, albeit with a slightly cut down word list (swears removed).
 
+## Installation
+### NuGet
+Install the package with the .NET CLI:
+```
+dotnet add package ComputerysProfanityFilter
+```
+Or add `ComputerysProfanityFilter` through the NuGet package manager in your IDE.
+
+### Unity Package Manager
+In Unity, open `Window > Package Manager`, select `+`, then choose `Add package from git URL...`, then enter:
+```
+https://github.com/C0mputery/ComputerysProfanityFilter.git?path=/ComputerysProfanityFilter#upm
+```
+The UPM package requires Unity 2021.3 or newer.
+
 ## Basic usage
 Create one `ProfanityList` and reuse it when filtering messages.
 After construction, the instance can be used concurrently from multiple threads.
