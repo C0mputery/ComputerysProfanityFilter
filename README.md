@@ -109,7 +109,7 @@ The rented buffers can be reused across calls after the pool is warm, although r
 Under typical use conditions, it will only allocate a string of the same size input.
 
 ## Comparisons
-| Feature | ComputerysProfanityFilter | [Profanity.Detector](https://github.com/stephenhaunts/ProfanityDetector) 0.1.8 | [BogaNet.BadWordFilter](https://github.com/slaubenberger/BogaNet) | [DotnetBadWordDetector](https://github.com/FelipeLuz/dotnet-bad-word-detector-and-filter) | [Censored](https://github.com/jamesmontemagno/Censored) | [mk.profanity](https://github.com/mcknight89/mk.profanity) |
+| Feature | ComputerysProfanityFilter | [Profanity.Detector](https://github.com/stephenhaunts/ProfanityDetector) | [BogaNet.BadWordFilter](https://github.com/slaubenberger/BogaNet) | [DotnetBadWordDetector](https://github.com/FelipeLuz/dotnet-bad-word-detector-and-filter) | [Censored](https://github.com/jamesmontemagno/Censored) | [mk.profanity](https://github.com/mcknight89/mk.profanity) |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
 | Distribution | [NuGet](https://www.nuget.org/packages/ComputerysProfanityFilter/) + UPM (see above) | [NuGet](https://www.nuget.org/packages/Profanity.Detector/) | [NuGet](https://www.nuget.org/packages/BogaNet.BadWordFilter/) | [NuGet](https://www.nuget.org/packages/DotnetBadWordDetector/) | [NuGet](https://www.nuget.org/packages/Censored/) | [NuGet](https://www.nuget.org/packages/mk.profanity/) |
 | Matching approach | Deterministic normalized term matching | Dictionary/regex scanning + Scunthorpe heuristic | Regex corpus + optional normalization; optional simple matching | ML.NET binary classifiers | Escaped wildcard patterns compiled to regex | Tokenized exact list + optional Levenshtein |
@@ -144,7 +144,7 @@ Under typical use conditions, it will only allocate a string of the same size in
 
 BenchmarkDotNet 0.15.8 results with .NET 10.0.10 on
 an AMD Ryzen 7 5800X (Windows 11). The suite compares this library with
-[`Profanity.Detector` 0.1.8](https://github.com/stephenhaunts/ProfanityDetector),
+[`Profanity.Detector`](https://github.com/stephenhaunts/ProfanityDetector),
 [BogaNet.BadWordFilter](https://github.com/slaubenberger/BogaNet),
 [DotnetBadWordDetector](https://github.com/FelipeLuz/dotnet-bad-word-detector-and-filter),
 [Censored](https://github.com/jamesmontemagno/Censored), and
