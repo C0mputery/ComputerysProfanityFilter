@@ -4,11 +4,8 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <Optimize>true</Optimize>
-        <NoWarn>$(NoWarn);NU1701</NoWarn>
     </PropertyGroup>
     <ItemGroup>
-        <ProjectReference Include="..\ComputerysProfanityFilter\ComputerysProfanityFilter.csproj" />
-        <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
+        <ProjectReference Include="..\ComputerysProfanityFilter\ComputerysProfanityFilter.csproj"/>
     </ItemGroup>
 </Project>

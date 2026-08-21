@@ -8,7 +8,12 @@
         <NoWarn>$(NoWarn);NU1701</NoWarn>
     </PropertyGroup>
     <ItemGroup>
+        <PackageReference Include="BogaNet.BadWordFilter" Version="1.4.0" />
+        <PackageReference Include="Censored" Version="1.0.2" />
+        <PackageReference Include="DotnetBadWordDetector" Version="2.0.0" />
+        <PackageReference Include="mk.profanity" Version="1.0.1" />
         <ProjectReference Include="..\ComputerysProfanityFilter\ComputerysProfanityFilter.csproj" />
         <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
+        <PackageReference Include="Profanity.Detector" Version="0.1.8" />
     </ItemGroup>
 </Project>

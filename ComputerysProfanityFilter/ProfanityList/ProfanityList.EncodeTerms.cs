@@ -16,12 +16,12 @@ namespace ComputerysProfanityFilter {
                     continue;
                 }
 
-                if (_sequenceMap.TryGetLongestMatch(term.Slice(index, length - index), out string? mapped, out int mappedLength, out _)) {
+                if (_prefixMatcher.TryGetLongestMatch(term.Slice(index, length - index), out string? mapped, out int mappedLength, out _, out char normalizedCharacter)) {
                     index += mappedLength;
                     foreach (char mappedCharacter in mapped) { AppendEncodedTermCharacter(mappedCharacter); }
                 }
                 else {
-                    char character = char.ToLowerInvariant(term[index]);
+                    char character = normalizedCharacter;
                     index++;
 
                     if (_characterMap.TryGetValue(character, out mapped)) {

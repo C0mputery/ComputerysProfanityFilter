@@ -108,23 +108,25 @@ namespace ComputerysProfanityFilter {
             char? previous = null;
 
             for (int textIndex = 0; textIndex < input.Length; textIndex++) {
-                ReadOnlySpan<char> remaining = input.AsSpan(textIndex);
-                bool hasSequenceMatch = _sequenceMap.TryGetLongestMatch(
-                    remaining,
-                    out string? mapped,
-                    out int mappedLength,
-                    out bool alwaysCensor
-                );
-                if (alwaysCensor) {
-                    if (CompletePendingMatch()) { return handler; }
-                    if (handler.HandleMatch(textIndex, textIndex + mappedLength - 1, mapped!)) { return handler; }
-
-                    textIndex += mappedLength - 1;
+                if (char.IsWhiteSpace(input[textIndex])) {
+                    if (ResetAtBoundary()) { return handler; }
                     continue;
                 }
 
-                if (char.IsWhiteSpace(input[textIndex])) {
-                    if (ResetAtBoundary()) { return handler; }
+                ReadOnlySpan<char> remaining = input.AsSpan(textIndex);
+                bool hasSequenceMatch = _prefixMatcher.TryGetLongestMatch(
+                    remaining,
+                    out string? mapped,
+                    out int mappedLength,
+                    out bool alwaysCensor,
+                    out char normalizedCharacter
+                );
+                if (alwaysCensor) {
+                    if (CompletePendingMatch() || handler.HandleMatch(textIndex, textIndex + mappedLength - 1, mapped!)) {
+                        return handler;
+                    }
+
+                    textIndex += mappedLength - 1;
                     continue;
                 }
 
@@ -140,9 +142,8 @@ namespace ComputerysProfanityFilter {
                     continue;
                 }
 
-                char character = char.ToLowerInvariant(input[textIndex]);
-                if (_characterMap.TryGetValue(character, out mapped)) {
-                    if (_boundaryCharacters.Contains(character) && !CanDirectlyContinueCurrentPattern(mapped)) {
+                if (_characterMap.TryGetValue(normalizedCharacter, out mapped)) {
+                    if (_boundaryCharacters.Contains(normalizedCharacter) && !CanDirectlyContinueCurrentPattern(mapped)) {
                         if (ResetAtBoundary()) { return handler; }
                         continue;
                     }
@@ -151,19 +152,19 @@ namespace ComputerysProfanityFilter {
                     continue;
                 }
 
-                if (_joinerCharacters.Contains(character)) { continue; }
+                if (_joinerCharacters.Contains(normalizedCharacter)) { continue; }
 
-                if (_boundaryCharacters.Contains(character)) {
+                if (_boundaryCharacters.Contains(normalizedCharacter)) {
                     if (ResetAtBoundary()) { return handler; }
                     continue;
                 }
 
-                if (!_expectedCharacters.Contains(character)) {
+                if (!_expectedCharacters.Contains(normalizedCharacter)) {
                     if (ResetAtUnexpectedCharacter()) { return handler; }
                     continue;
                 }
 
-                if (AppendEncodedCharacter(ref sourcePositions, character, textIndex, textIndex)) { return handler; }
+                if (AppendEncodedCharacter(ref sourcePositions, normalizedCharacter, textIndex, textIndex)) { return handler; }
             }
             CompletePendingMatch();
 

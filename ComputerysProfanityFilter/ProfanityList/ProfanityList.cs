@@ -44,7 +44,7 @@ namespace ComputerysProfanityFilter {
         /// <summary>
         /// Maps character sequences to their replacement strings and literal always-censor terms.
         /// </summary>
-        private readonly SequenceTrie _sequenceMap;
+        private readonly PrefixMatcher _prefixMatcher;
 
         /// <summary>
         /// Replaces every detected profanity match with the specified character.
@@ -55,6 +55,8 @@ namespace ComputerysProfanityFilter {
         /// <exception cref="ArgumentNullException"><paramref name="input"/> is <see langword="null"/>.</exception>
         public string Censor(string input, char censorCharacter = '#') {
             if (input == null) { throw new ArgumentNullException(nameof(input)); }
+            if (input.Length == 0) { return input; }
+
             CensorMatchHandler handler = new CensorMatchHandler(input, censorCharacter);
             try { handler = ScanForProfanity(input, handler); return handler.GetResult(); }
             finally { handler.ReturnBuffer(); }
@@ -97,6 +99,7 @@ namespace ComputerysProfanityFilter {
         /// <exception cref="ArgumentNullException"><paramref name="input"/> is <see langword="null"/>.</exception>
         public bool HasProfanity(string input) {
             if (input == null) { throw new ArgumentNullException(nameof(input)); }
+            if (input.Length == 0) { return false; }
 
             FirstMatchHandler handler = ScanForProfanity(input, default(FirstMatchHandler));
             return handler.Found;
@@ -119,10 +122,11 @@ namespace ComputerysProfanityFilter {
         /// <exception cref="ArgumentNullException"><paramref name="input"/> is <see langword="null"/>.</exception>
         public IReadOnlyList<ProfanityMatch> DetectAllProfanities(string input) {
             if (input == null) { throw new ArgumentNullException(nameof(input)); }
+            if (input.Length == 0) { return Array.Empty<ProfanityMatch>(); }
 
             List<ProfanityMatch> matches = new List<ProfanityMatch>();
             CollectMatchesHandler handler = new CollectMatchesHandler(matches);
-            handler = ScanForProfanity(input, handler);
+            ScanForProfanity(input, handler);
             return matches.Count == 0 ? Array.Empty<ProfanityMatch>() : matches.AsReadOnly();
         }
 
