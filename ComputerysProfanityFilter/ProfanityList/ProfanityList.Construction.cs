@@ -118,8 +118,7 @@ namespace ComputerysProfanityFilter {
                 throw new ArgumentException("At least one term that produces a non-empty pattern is required.", nameof(terms));
             }
 
-            InitializeAhoCorasick(encodedTerms.Values);
-
+            InitializeAhoCorasick(encodedTerms);
         }
 
         private Dictionary<string, Pattern> EncodeTerms(IEnumerable<string> terms) {
@@ -132,7 +131,7 @@ namespace ComputerysProfanityFilter {
         }
 
         private static void AddEncodedPattern(string encoded, string term, int termOrder, Dictionary<string, Pattern> patterns) {
-            AddEncodedPattern(encoded, new Pattern(encoded, term, termOrder), patterns);
+            AddEncodedPattern(encoded, new Pattern(encoded.Length, term, termOrder), patterns);
         }
 
         private static void AddEncodedPattern(string encoded, Pattern pattern, Dictionary<string, Pattern> patterns) {

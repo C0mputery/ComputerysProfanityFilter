@@ -8,15 +8,14 @@ namespace ComputerysProfanityFilter {
         private Pattern[] _patterns = null!;
         private int _maximumPatternLength;
 
-        private void InitializeAhoCorasick(IEnumerable<Pattern> patterns) {
+        private void InitializeAhoCorasick(Dictionary<string, Pattern> patterns) {
             if (patterns == null) { throw new ArgumentNullException(nameof(patterns)); }
 
             List<NodeBuilder> nodes = new List<NodeBuilder> { new NodeBuilder() };
             List<Pattern> patternList = new List<Pattern>();
-            Dictionary<string, int> patternIds = new Dictionary<string, int>(StringComparer.Ordinal);
             int maximumPatternLength = 0;
 
-            foreach (Pattern pattern in patterns) { AddPattern(pattern); }
+            foreach ((string encoded, Pattern pattern) in patterns) { AddPattern(encoded, pattern); }
             Build();
 
             _nodes = Freeze();
@@ -26,15 +25,11 @@ namespace ComputerysProfanityFilter {
             return;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            void AddPattern(Pattern pattern) {
-                string encoded = pattern.Encoded;
+            void AddPattern(string encoded, Pattern pattern) {
                 if (encoded.Length == 0) { throw new ArgumentException("Empty patterns are not supported.", nameof(patterns)); }
-
-                if (patternIds.ContainsKey(encoded)) { return; }
 
                 int patternId = patternList.Count;
                 patternList.Add(pattern);
-                patternIds.Add(encoded, patternId);
                 maximumPatternLength = Math.Max(maximumPatternLength, encoded.Length);
 
                 int nodeIndex = 0;
@@ -214,7 +209,7 @@ namespace ComputerysProfanityFilter {
 
                 foreach (int patternId in _nodes[nodeIndex].PatternIds) {
                     Pattern pattern = _patterns[patternId];
-                    int matchStart = positions.FromEnd(pattern.Encoded.Length - 1);
+                    int matchStart = positions.FromEnd(pattern.EncodedLength - 1);
                     if (!hasPendingMatch) {
                         hasPendingMatch = true;
                         pendingMatchStart = matchStart;

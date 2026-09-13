@@ -6,17 +6,17 @@ namespace ComputerysProfanityFilter {
         /// <summary>
         /// The zero-based inclusive start index of the match in the input text.
         /// </summary>
-        public int Start { get; }
+        public readonly int Start;
 
         /// <summary>
         /// The zero-based inclusive end index of the match in the input text.
         /// </summary>
-        public int End { get; }
+        public readonly int End;
 
         /// <summary>
         /// The configured term that matched the input text.
         /// </summary>
-        public string Term { get; }
+        public readonly string Term;
 
         /// <summary>
         /// Creates a profanity match for a span of input text.

@@ -5,16 +5,17 @@ using System.Diagnostics.CodeAnalysis;
 namespace ComputerysProfanityFilter {
     public sealed partial class ProfanityList {
         internal sealed class Pattern {
-            internal Pattern(string encoded, string term, int termOrder) {
-                Encoded = encoded;
+            internal readonly int EncodedLength;
+            internal readonly string Term;
+            private readonly int _termOrder;
+
+            internal Pattern(int encodedLength, string term, int termOrder) {
+                EncodedLength = encodedLength;
                 Term = term;
-                TermOrder = termOrder;
+                _termOrder = termOrder;
             }
 
-            internal string Encoded { get; }
-            internal string Term { get; }
-            private int TermOrder { get; }
-            internal bool IsPreferredTo(Pattern other) => Term.Length > other.Term.Length || (Term.Length == other.Term.Length && TermOrder < other.TermOrder);
+            internal bool IsPreferredTo(Pattern other) => Term.Length > other.Term.Length || (Term.Length == other.Term.Length && _termOrder < other._termOrder);
         }
 
         private ref struct SourcePositionWindow {
@@ -208,13 +209,13 @@ namespace ComputerysProfanityFilter {
             }
 
             private readonly struct Entry {
+                internal readonly char Key;
+                internal readonly int Node;
+
                 internal Entry(char key, int node) {
                     Key = key;
                     Node = node;
                 }
-
-                internal char Key { get; }
-                internal int Node { get; }
             }
         }
     }
