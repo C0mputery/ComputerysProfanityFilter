@@ -1,0 +1,9 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="ComputerysProfanityFilter.Tests/ComputerysProfanityFilter.Tests.csproj" />
+  <Project Path="ComputerysProfanityFilter/ComputerysProfanityFilter.csproj" />
+</Solution>
