@@ -91,7 +91,6 @@ namespace ComputerysProfanityFilter {
 
             // self-harm
             "kill yourself", "kill your self", "kill you're self", "kys",
-
         });
 
         /// <summary>

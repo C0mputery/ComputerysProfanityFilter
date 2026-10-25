@@ -6,12 +6,12 @@ namespace ComputerysProfanityFilter {
     public sealed partial class ProfanityList {
         private static readonly string[] RegularSuffixes = { "ed", "ing", "er" };
 
-        internal Dictionary<string, Pattern> GenerateEncodedVariations(IReadOnlyList<string> terms) {
+        internal Dictionary<string, Pattern> GenerateEncodedVariations(IEnumerable<string> terms) {
             if (terms == null) { throw new ArgumentNullException(nameof(terms)); }
 
             Dictionary<string, Pattern> encodedForms = new Dictionary<string, Pattern>(StringComparer.Ordinal);
-            for (int termOrder = 0; termOrder < terms.Count; termOrder++) {
-                string term = terms[termOrder];
+            int termOrder = 0;
+            foreach (string term in terms) {
                 if (string.IsNullOrEmpty(term)) { continue; }
                 if (StringHelper.ContainsWhitespace(term)) {
                     GenerateEncodedPhraseVariations(term, termOrder, encodedForms);
