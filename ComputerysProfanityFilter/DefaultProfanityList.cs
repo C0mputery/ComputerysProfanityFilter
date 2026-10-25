@@ -78,7 +78,6 @@ namespace ComputerysProfanityFilter {
             "nigger", "nigga", "niga", "nigra", "niggle", "niglet", "nigress", "negro", "neger", "nig nog", "nig-nog", "nigaboo",
             "paki",
             "raghead",
-            "rape",
             "retard", "reetard", "ritard", "r-tard", "tard",
             "sambo",
             "shemale",
@@ -91,6 +90,13 @@ namespace ComputerysProfanityFilter {
 
             // self-harm
             "kill yourself", "kill your self", "kill you're self", "kys",
+
+            // sexual abuse
+            "rape", "rapist",
+            "groomer",
+            "molester",
+            "pedophile", "paedophile",
+            "pedo", "paedo",
         });
 
         /// <summary>
